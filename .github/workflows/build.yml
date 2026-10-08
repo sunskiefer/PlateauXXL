@@ -1,0 +1,65 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Tools
+        run: |
+          sudo apt-get install -y libcairo2
+          pip install ziglang pillow cairosvg
+
+      - name: Tests (x86, ASan + UBSan)
+        run: test/run_tests.sh
+
+      - name: Build (armv7, glibc 2.31)
+        run: |
+          if ! ./build.sh > build.log 2>&1; then
+            grep -v -E "warning|note:|In file included|^ +[0-9]* [|]|^ +[|]|\^|~~" build.log | tail -25 \
+              | while IFS= read -r line; do echo "::error title=build.sh::$line"; done
+            exit 1
+          fi
+          tail -3 build.log
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          case "$GITHUB_REF" in refs/tags/v*) ;; *) VERSION="0.0.0-dev" ;; esac
+          python3 third_party/mpc-vst-plugins/tools/release.py \
+            --so build/arm/plateau.so \
+            --skin "build/skin/ANDREALPHEUS - VST - Plateau" \
+            --entry build/pluginlist-entry.xml \
+            --version "$VERSION" \
+            --about "Plateau by ANDREALPHEUS: Valley Audio's Plateau reverb for MPC OS" \
+            --repo sunskiefer/Plateau-MPC --license GPL-3.0-or-later \
+            -o dist
+
+      - name: Catalog check
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: python3 third_party/mpc-vst-plugins/tools/catalog_check.py dist/*.zip --catalog
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Plateau-mpc-armv7
+          path: dist/*.zip
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
+          prerelease: false

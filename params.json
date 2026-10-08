@@ -1,0 +1,23 @@
+{
+  "name": "Plateau",
+  "params": [
+    { "key": "dry", "name": "Dry", "min": 0.0, "max": 1.0, "default": 1.0, "dynamic_display": true },
+    { "key": "wet", "name": "Wet", "min": 0.0, "max": 1.0, "default": 0.5, "dynamic_display": true },
+    { "key": "pre_delay", "name": "Pre-Delay", "min": 0.0, "max": 0.5, "default": 0.0, "dynamic_display": true },
+    { "key": "in_low", "name": "In Low", "min": 0.0, "max": 10.0, "default": 10.0, "dynamic_display": true },
+    { "key": "in_high", "name": "In High", "min": 0.0, "max": 10.0, "default": 10.0, "dynamic_display": true },
+    { "key": "size", "name": "Size", "min": 0.0, "max": 1.0, "default": 0.5, "dynamic_display": true },
+    { "key": "diffusion", "name": "Diffusion", "min": 0.0, "max": 10.0, "default": 10.0, "dynamic_display": true },
+    { "key": "decay", "name": "Decay", "min": 0.1, "max": 0.9999, "default": 0.54995, "dynamic_display": true },
+    { "key": "rv_low", "name": "Reverb Low", "min": 0.0, "max": 10.0, "default": 10.0, "dynamic_display": true },
+    { "key": "rv_high", "name": "Reverb High", "min": 0.0, "max": 10.0, "default": 10.0, "dynamic_display": true },
+    { "key": "mod_rate", "name": "Mod Rate", "min": 0.0, "max": 1.0, "default": 0.0, "dynamic_display": true },
+    { "key": "mod_shape", "name": "Mod Shape", "min": 0.0, "max": 1.0, "default": 0.5, "dynamic_display": true },
+    { "key": "mod_depth", "name": "Mod Depth", "min": 0.0, "max": 16.0, "default": 0.5, "dynamic_display": true },
+    { "key": "hold", "name": "Hold", "options": ["Off", "On"], "default": 0 },
+    { "key": "clear", "name": "Clear", "min": 0.0, "max": 1.0, "momentary": true, "type": "trigger", "default": 0.0 },
+    { "key": "tuned", "name": "Tuned", "options": ["Off", "On"], "default": 0 },
+    { "key": "diffuse_in", "name": "Diffuse In", "options": ["Off", "On"], "default": 1 },
+    { "key": "saturate", "name": "Saturate", "options": ["Off", "On"], "default": 0 }
+  ]
+}

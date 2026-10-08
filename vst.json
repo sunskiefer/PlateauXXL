@@ -1,0 +1,29 @@
+{
+  "name": "Plateau",
+  "vendor": "ANDREALPHEUS",
+  "uid": "AnPl",
+  "version": 1000,
+  "so": "plateau.so",
+  "params": "params.json",
+  "effect": true,
+  "build": {
+    "root": ".",
+    "sources": [
+      "src/engine.cc",
+      "third_party/valley/src/Plateau/Dattorro.cpp",
+      "third_party/valley/src/dsp/filters/OnePoleFilters.cpp"
+    ],
+    "cflags": [
+      "-Isrc",
+      "-Ithird_party/valley/src"
+    ],
+    "libs": [
+      "-lm",
+      "-ldl",
+      "-lpthread"
+    ]
+  },
+  "layout": "layout.conf",
+  "title_font": "art/fonts/TitilliumWeb-SemiBold.ttf",
+  "skin_post": "tools/post_skin.py"
+}
