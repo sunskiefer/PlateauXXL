@@ -1,4 +1,4 @@
 { "id": "plateau", "name": "Plateau", "author": "L'Cronx", "repo": "sunskiefer/Plateau-MPC",
-  "kind": "effect", "style": "reverb", "tags": ["reverb", "plate", "dattorro", "valley", "vcv", "freeze"],
+  "kind": "effect", "style": "reverb", "tags": ["reverb", "plate", "dattorro", "valley", "vcv", "freeze", "lfo", "modulation", "sequencer"],
   "license": "GPL-3.0-or-later",
-  "summary": "Valley Audio's Plateau reverb from VCV Rack: Dattorro plate with a modulated tank, Hold, Clear and Tuned mode, in the VCV panel's colours with Valley's knobs." }
+  "summary": "Valley Audio's Plateau reverb from VCV Rack, patched: every CV input on a built-in source (Bogaudio LFOs, Tidal Modulator 2, Random Sampler, step and gate sequencers) synced to the MPC tempo, each page drawn like its module." }

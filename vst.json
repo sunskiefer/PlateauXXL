@@ -2,7 +2,7 @@
   "name": "Plateau",
   "vendor": "ANDREALPHEUS",
   "uid": "AnPl",
-  "version": 1000,
+  "version": 2000,
   "so": "plateau.so",
   "params": "params.json",
   "effect": true,
@@ -10,12 +10,37 @@
     "root": ".",
     "sources": [
       "src/engine.cc",
+      "src/sources.cc",
+      "src/marbles_source.cc",
       "third_party/valley/src/Plateau/Dattorro.cpp",
-      "third_party/valley/src/dsp/filters/OnePoleFilters.cpp"
+      "third_party/valley/src/dsp/filters/OnePoleFilters.cpp",
+      "third_party/bogaudio/dsp/analyzer.cpp",
+      "third_party/bogaudio/dsp/math.cpp",
+      "third_party/bogaudio/dsp/noise.cpp",
+      "third_party/bogaudio/dsp/oscillator.cpp",
+      "third_party/bogaudio/dsp/signal.cpp",
+      "third_party/bogaudio/dsp/table.cpp",
+      "third_party/bogaudio/dsp/filters/filter.cpp",
+      "third_party/mutable/stmlib/dsp/units.cc",
+      "third_party/mutable/stmlib/utils/random.cc",
+      "third_party/mutable/tides2/poly_slope_generator.cc",
+      "third_party/mutable/tides2/resources.cc",
+      "third_party/mutable/marbles/resources.cc",
+      "third_party/mutable/marbles/random/discrete_distribution_quantizer.cc",
+      "third_party/mutable/marbles/random/lag_processor.cc",
+      "third_party/mutable/marbles/random/output_channel.cc",
+      "third_party/mutable/marbles/random/quantizer.cc",
+      "third_party/mutable/marbles/random/t_generator.cc",
+      "third_party/mutable/marbles/random/x_y_generator.cc",
+      "third_party/mutable/marbles/ramp/ramp_extractor.cc"
     ],
     "cflags": [
       "-Isrc",
-      "-Ithird_party/valley/src"
+      "-Ithird_party/valley/src",
+      "-Ithird_party/bogaudio",
+      "-Ithird_party/bogaudio/dsp",
+      "-Ithird_party/bogaudio/lib",
+      "-Ithird_party/mutable"
     ],
     "libs": [
       "-lm",
@@ -25,5 +50,8 @@
   },
   "layout": "layout.conf",
   "title_font": "art/fonts/TitilliumWeb-SemiBold.ttf",
-  "skin_post": "tools/post_skin.py"
+  "defines": {
+    "HAS_LFO_BPM": 1,
+    "HAS_TRANSPORT": 1
+  }
 }

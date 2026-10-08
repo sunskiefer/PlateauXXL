@@ -133,10 +133,10 @@ int main(int argc, char** argv) {
   const char* wav_dir = (argc > 2 && !strcmp(argv[1], "--wav")) ? argv[2] : NULL;
 
   // ---- tail
-  std::vector<int16_t> ir = Ir(0.54995, 0.5, 6);
-  double early = Rms(ir, kRate / 10, kRate / 10), late = Rms(ir, 5 * kRate, kRate / 2);
+  std::vector<int16_t> ir = Ir(0.54995, 0.5, 10);
+  double early = Rms(ir, kRate / 10, kRate / 10), late = Rms(ir, 9 * kRate, kRate / 2);
   char msg[200];
-  snprintf(msg, sizeof msg, "impulse rings (%.1f dBFS at 0.1 s) and decays (%.1f dBFS at 5 s)", Db(early), Db(late));
+  snprintf(msg, sizeof msg, "impulse rings (%.1f dBFS at 0.1 s) and decays (%.1f dBFS at 9 s)", Db(early), Db(late));
   Check(early > 1e-3 && late < early * 0.01, msg);
   double l = 0, r = 0, lr = 0;
   for (size_t i = 0; i + 1 < ir.size(); i += 2) { l += ir[i] * (double)ir[i]; r += ir[i + 1] * (double)ir[i + 1]; lr += ir[i] * (double)ir[i + 1]; }
@@ -226,6 +226,88 @@ int main(int argc, char** argv) {
     Check(tail > 1e-4 && tail < 2.0, msg);
   }
 
+  // ---- CV inputs fed by the built-in sources
+  {
+    // Wet from a gate: Wet knob at 0, its input on Gate 1 (every step on, full width) -> +10 V x 0.5 = full wet
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 0);
+    for (int s = 1; s <= 16; ++s) { char k[16]; snprintf(k, sizeof k, "gt1_g%d", s); p.Set(k, 1); }
+    p.Set("gt1_width", 1.0);
+    std::vector<int16_t> in = Noise(kRate / 2, 0.3), off, on;
+    p.Run(&in, kRate / 2, &off);
+    p.Set("wet_src", 18);   // Gate 1
+    p.Run(&in, kRate / 2, &on);
+    snprintf(msg, sizeof msg, "Wet input on Gate 1 opens the wet signal (%.1f dB off, %.1f dB on)",
+             Db(Rms(off, kRate / 4, kRate / 4)), Db(Rms(on, kRate / 4, kRate / 4)));
+    Check(Rms(off, kRate / 4, kRate / 4) < 1e-4 && Rms(on, kRate / 4, kRate / 4) > 1e-3, msg);
+  }
+  {
+    // Hold from a gate: Hold input on Gate 1 (all on) sustains a tail the knob alone would let decay
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 1); p.Set("decay", 0.3);
+    for (int s = 1; s <= 16; ++s) { char k[16]; snprintf(k, sizeof k, "gt1_g%d", s); p.Set(k, 1); }
+    p.Set("gt1_width", 1.0);
+    p.Set("hold_src", 18);
+    std::vector<int16_t> in = Noise(kRate / 2, 0.3), out, tail;
+    p.Run(&in, kRate / 2, &out);
+    p.Run(NULL, 4 * kRate, &tail);
+    double held = Rms(tail, 3 * kRate, kRate / 2);
+    p.Set("hold_src", 0);
+    std::vector<int16_t> after;
+    p.Run(NULL, 4 * kRate, &after);
+    double released = Rms(after, 3 * kRate, kRate / 2);
+    snprintf(msg, sizeof msg, "Hold input on a gate holds the tank, and lets go (%.1f dB held, %.1f dB after)", Db(held), Db(released));
+    Check(held > 1e-3 && released < held * 0.01, msg);
+  }
+  {
+    // Clear from a gate: a held tank, then the Clear input on Gate 1 (one 1/4 step, Length 1: a gate each beat)
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 1); p.Set("hold", 1);
+    p.Set("gt1_g1", 1); p.Set("gt1_len", 1); p.Set("gt1_div", 5);   // "1/4"
+    std::vector<int16_t> in = Noise(kRate / 4, 0.3), out, held, cleared;
+    p.Run(&in, kRate / 4, &out);
+    p.Run(NULL, kRate / 2, &held);
+    p.Set("clear_src", 18);
+    p.Run(NULL, kRate / 2, &cleared);   // at 120 BPM a gate comes within 0.5 s
+    snprintf(msg, sizeof msg, "Clear input on a gate empties a held tank (%.1f dB held, %.1f dB after the gate)",
+             Db(Rms(held, kRate / 4, kRate / 4)), Db(Rms(cleared, kRate / 2 - kRate / 20, kRate / 20)));
+    Check(Rms(held, kRate / 4, kRate / 4) > 1e-3 && Rms(cleared, kRate / 2 - kRate / 20, kRate / 20) < 1e-4, msg);
+  }
+  {
+    // Size from LFO 1 (synced 1/4): the tail differs from an unmodulated one, and stays sane
+    std::vector<int16_t> plain = Ir(0.8, 0.5, 4), moved;
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 1); p.Set("decay", 0.8); p.Set("size", 0.5);
+    p.Set("size_src", 1); p.Set("size_cv", 1); p.Set("lfo1_sync", 6);
+    std::vector<int16_t> imp = Impulse(kBlock);
+    p.Run(&imp, kBlock, &moved);
+    p.Run(NULL, 4 * kRate, &moved);
+    double diff = 0;
+    for (size_t i = 0; i < plain.size() && i < moved.size(); ++i) diff += fabs(plain[i] - (double)moved[i]);
+    double tail = Rms(moved, 3 * kRate, kRate / 2);
+    snprintf(msg, sizeof msg, "Size input on LFO 1 moves the tank (mean difference %.0f LSB, tail %.1f dBFS)",
+             diff / plain.size(), Db(tail));
+    Check(diff / plain.size() > 5 && tail < 0.5, msg);
+  }
+  {
+    // Transport and tempo: Dry knob 0, its input on Seq 1 (step 1 +5 V, the rest -5 V): only the first 1/16 after
+    // play passes the dry signal; at 60 BPM a 1/16 lasts 0.25 s
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 0); p.Set("dry_cv", 1);
+    p.Set("sq1_s1", 5);
+    for (int s = 2; s <= 16; ++s) { char k[16]; snprintf(k, sizeof k, "sq1_s%d", s); p.Set(k, -5); }
+    p.Set("dry_src", 16);
+    p.e->set_param(p.inst, "lfo_bpm", "60");
+    p.e->set_param(p.inst, "transport", "1");
+    const int n = 86 * kBlock * 2;
+    std::vector<int16_t> in = Noise(n, 0.25), out;
+    p.Run(&in, n, &out);
+    double first = Rms(out, kRate / 20, kRate / 10), later = Rms(out, kRate / 2, kRate / 10);
+    snprintf(msg, sizeof msg, "Seq 1 restarts with the transport and runs at the MPC tempo (%.1f dB in step 1, %.1f dB in step 3)",
+             Db(first), Db(later));
+    Check(first > 0.05 && later < 1e-4, msg);
+  }
+
   // ---- display text
   {
     Plug p;
@@ -233,6 +315,8 @@ int main(int argc, char** argv) {
       {"dry", 1, "100 %"}, {"wet", 0.5, "50 %"}, {"pre_delay", 0.25, "250 ms"}, {"in_high", 10, "14.1 kHz"},
       {"in_high", 0, "440 Hz"}, {"in_low", 10, "14 Hz"}, {"in_low", 0, "440 Hz"}, {"decay", 0.1, "0 %"},
       {"decay", 0.9999, "100 %"}, {"mod_shape", 0.5, "+0 %"}, {"mod_depth", 16, "100 %"}, {"diffusion", 10, "100 %"},
+      {"size_cv", -0.5, "-50 %"}, {"lfo1_offset", 1, "+5.00 V"}, {"sq2_s16", -2.5, "-2.50 V"}, {"td_freq", 12, "+12.0 st"},
+      {"lfo2_freq", 0, "Sync"},
     };
     for (size_t i = 0; i < sizeof t / sizeof t[0]; ++i) {
       p.Set(t[i].key, t[i].v);
@@ -244,14 +328,24 @@ int main(int argc, char** argv) {
 
   // ---- speed (host only; the device check is the framework's bench)
   {
-    Plug p;
-    p.Set("mod_depth", 8); p.Set("mod_rate", 0.5);
-    std::vector<int16_t> in = Noise(kRate, 0.3), out;
-    out.reserve(2 * 30 * kRate);
-    clock_t t0 = clock();
-    for (int s = 0; s < 30; ++s) p.Run(&in, kRate, &out);
-    double sec = (clock() - t0) / (double)CLOCKS_PER_SEC;
-    printf("info 30 s of audio in %.2f s on this host (%.0fx real time)\n", sec, 30.0 / sec);
+    for (int busy = 0; busy < 2; ++busy) {
+      Plug p;
+      p.Set("mod_depth", 8); p.Set("mod_rate", 0.5);
+      if (busy) {   // every source running: each CV input on a different one
+        const char* in_keys[] = { "dry", "wet", "pre_delay", "in_low", "in_high", "size", "diffusion", "decay",
+                                  "rv_high", "rv_low", "mod_rate", "mod_shape", "mod_depth", "hold", "clear" };
+        const int srcs[] = { 1, 2, 3, 4, 5, 6, 9, 12, 7, 8, 10, 11, 16, 13, 19 };
+        for (int i = 0; i < 15; ++i) { char k[32]; snprintf(k, sizeof k, "%s_src", in_keys[i]); p.Set(k, srcs[i]); }
+        p.Set("decay_cv", 0.05); p.Set("size_cv", 0.1);
+      }
+      std::vector<int16_t> in = Noise(kRate, 0.3), out;
+      out.reserve(2 * 30 * kRate);
+      clock_t t0 = clock();
+      for (int s = 0; s < 30; ++s) p.Run(&in, kRate, &out);
+      double sec = (clock() - t0) / (double)CLOCKS_PER_SEC;
+      printf("info %s: 30 s of audio in %.2f s on this host (%.0fx real time)\n",
+             busy ? "every source in use" : "reverb only", sec, 30.0 / sec);
+    }
   }
 
   if (wav_dir) {

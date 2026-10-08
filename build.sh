@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 # Build Plateau for MPC OS Gen1 (armv7-a hard-float, glibc <= 2.31 so it also loads on MPC OS 2.x).
 #   ./build.sh                     (MPC_VST=../mpc-vst-plugins to use another framework checkout)
-# Needs: python3 + Pillow + cairosvg, a host gcc (for shadow_art), and Zig (pip install ziglang). No Docker.
+# Needs: python3 + Pillow + cairosvg (+ the DejaVu fonts for the Mutable pages' italics), a host gcc (for shadow_art), and Zig (pip install ziglang). No Docker.
 # Output: build/package/ANDREALPHEUS - VST - Plateau/  (skin + plateau.so) and build/pluginlist-entry.xml
 set -euo pipefail
 cd "$(dirname "$0")"
 MPC_VST="${MPC_VST:-$PWD/third_party/mpc-vst-plugins}"
 ZIG="${ZIG:-python3 -m ziglang}"
 NAME="ANDREALPHEUS - VST - Plateau"
+python3 tools/gen_params.py
 mkdir -p build/host build/arm
 [ -x build/host/shadow_art ] || gcc -O2 -w -I"$MPC_VST/tools/vendor/force-shadow/tools" -x c -o build/host/shadow_art "$MPC_VST/tools/shadow_art.c" -lm
 rm -rf build/skin
 SHADOW_TITLE_FONT="$PWD/art/fonts/TitilliumWeb-SemiBold.ttf" SHADOW_ART="$PWD/build/host/shadow_art" python3 "$MPC_VST/tools/gen_vst.py" vst.json
-python3 tools/knob_art.py "build/skin/$NAME/Plugin Skins"   # Valley's Rogan knobs, coloured as on the VCV panel
+python3 tools/knob_art.py "build/skin/$NAME/Plugin Skins"   # each page's knobs: Valley, Bogaudio, VCV Rogan
+python3 tools/post_skin.py "build/skin/$NAME/Plugin Skins" layout.conf   # each page in its module's colours
 SRCS=$(python3 -c "import json; print(' '.join(json.load(open('vst.json'))['build']['sources']))")
 CFLAGS=$(python3 -c "import json; print(' '.join(json.load(open('vst.json'))['build']['cflags']))")
 TGT="-target arm-linux-gnueabihf.2.31 -mcpu=generic+v7a+vfp3d16-d32-neon+thumb2 -ffp-contract=off"

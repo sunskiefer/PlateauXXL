@@ -1,20 +1,15 @@
 # Roadmap
 
-## Milestone 1: the reverb (0.1.0)
-Plateau's DSP with all its front-panel controls, the VCV dark-panel look and Valley's knobs, tests on x86 and ARM.
-Next step: install on a Force, check it loads, sounds right and the CPU bench passes (`tools/bench.sh`).
+## Done (offline): 0.1.0 the reverb, 0.2.0 the modulation
+Plateau's DSP with all its controls; a built-in source for each of its 15 CV inputs (Bogaudio LFO x4, Tidal
+Modulator 2, Random Sampler, two step and two gate sequencers), tempo-synced; each page in its module's look.
 
-## Milestone 2: a built-in source for every CV input
-On VCV Rack, Plateau's character comes from patching LFOs, sequencers and triggers into its jacks. On the Force nothing
-can be patched, so each of its 15 CV inputs gets its own control here:
+## Next: on the Force
+- Install 0.2.0, check it loads, every page, the popups, Q-Links and project save/reload.
+- CPU: `tools/bench.sh build/arm/plateau.so <device-ip> -j` (docs/BENCH.md), once with nothing patched and once with
+  every source in use (the heaviest case measured offline costs about twice the reverb alone).
+- Record the results in `tested.json`, then release.
 
-- **Per input:** a source select and the module's own attenuverter (CV depth). Inputs: Dry, Wet, Pre-Delay, In Low,
-  In High, Size, Diffusion, Decay, Rev Low, Rev High, Mod Rate, Mod Shape, Mod Depth, Hold, Clear.
-- **A shared pool of sources**, synced to the MPC tempo, that any input can pick:
-  - LFOs after Bogaudio's LFO (GPL-3.0).
-  - Tides (Mutable Instruments, MIT) for ramps, envelopes and complex cycles.
-  - Marbles (Mutable Instruments, MIT) for random voltages and random gates.
-  - Step and trigger sequencers (written here): 16 steps, per-step value or gate, length, division.
-- **A MOD page** in the skin.
-
-The new parameters are appended after the current 18, so projects saved with 0.1.0 keep working.
+## Ideas
+- Random Sampler's External mode and X clock input (sampling another source).
+- A source meter on the CV IN page (what each input receives).
