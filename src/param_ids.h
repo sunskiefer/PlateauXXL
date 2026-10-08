@@ -186,7 +186,10 @@ enum ParamId {
   P_GT2_LEN = 181,
   P_GT2_DIV = 182,
   P_GT2_WIDTH = 183,
-  P_COUNT = 184
+  P_LIM_DRIVE = 184,
+  P_LIM_CEILING = 185,
+  P_LIM_RELEASE = 186,
+  P_COUNT = 187
 };
 
 static const int kNumSources = 20;

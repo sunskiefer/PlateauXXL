@@ -5,7 +5,8 @@ Plateau's DSP with all its controls; a built-in source for each of its 15 CV inp
 Modulator 2, Random Sampler, two step and two gate sequencers), tempo-synced; each page in its module's look.
 
 ## Next: on the Force
-- Install 0.2.0, check it loads, every page, the popups, Q-Links and project save/reload.
+- 0.2.0 seen on a Force (2026-10-08): pages draw as designed; the LFO FREQ knob jumped (fixed in 0.3.0).
+- Install 0.3.0: the FREQ knob, the limiter, and playing every source; popups, Q-Links, project save/reload.
 - CPU: `tools/bench.sh build/arm/plateau.so <device-ip> -j` (docs/BENCH.md), once with nothing patched and once with
   every source in use (the heaviest case measured offline costs about twice the reverb alone).
 - Record the results in `tested.json`, then release.

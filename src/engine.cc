@@ -9,7 +9,7 @@
 //
 // Levels: VCV Rack's audio interface maps +-10 V to full scale, so a sample x is 10x volts. Plateau feeds the reverb
 // with in_V * 0.1 and adds rev * wet * 10 volts back, so in full-scale units out = x * dry + rev(x) * wet, the same
-// as the module. Output saturation works on volts, as in the module.
+// as the module. Output saturation works on volts, as in the module. Last comes RMXXXL's brickwall limiter.
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -23,6 +23,7 @@
 #include "denormals.h"
 #include "param_ids.h"
 #include "sources.h"
+#include "limiter.h"
 
 extern "C" {
 #include "engine.h"
@@ -58,6 +59,8 @@ static_assert(P_COUNT <= NPARAMS, "params.h is out of date: run tools/gen_params
 struct Instance {
   Dattorro reverb;
   plateau::Sources sources;
+  plateau::Limiter limiter;
+  float s_drive, s_ceiling;   // limiter settings, smoothed per block
   float param[P_COUNT];
   // tempo
   float bpm;
@@ -74,6 +77,7 @@ struct Instance {
   float env;             // input and wet gain during a clear
   // last block of source voltages (rendered at the start of each block)
   float src[kNumSources][kMaxBlock];
+  float out_l[kMaxBlock], out_r[kMaxBlock];   // the block before the limiter
 
   Instance() : reverb(kSampleRate, 16.0, kSizeMax) {}
 };
@@ -184,6 +188,9 @@ void* Create(const char*) {
   memset(s->src, 0, sizeof s->src);
   s->reverb.setSampleRate(kSampleRate);
   s->sources.Init(static_cast<float>(kSampleRate));
+  s->limiter.Init();
+  s->s_drive = DefaultValue(P_LIM_DRIVE);
+  s->s_ceiling = DefaultValue(P_LIM_CEILING);
   PushControlSettings(s, 0);
   return s;
 }
@@ -283,6 +290,12 @@ int Display(const Instance* s, int p, char* buf, int len) {
       return snprintf(buf, len, "%+.1f st", v);
     case P_MB_T_RATE:
       return snprintf(buf, len, "%+.0f st", v * 60.0f);
+    case P_LIM_DRIVE:
+      return snprintf(buf, len, "+%.1f dB", v);
+    case P_LIM_CEILING:
+      return snprintf(buf, len, "%.1f dB", v);
+    case P_LIM_RELEASE:
+      return snprintf(buf, len, "%.0f ms", v);
   }
   if (!strncmp(key, "lfo", 3)) {
     int first = P_LFO1_WAVE + (key[3] - '1') * (P_LFO2_WAVE - P_LFO1_WAVE);
@@ -389,8 +402,18 @@ void ProcessBlock(Instance* s, const int16_t* in_lr, int16_t* out_lr, int frames
       ol = tanhDriveSignal(ol * kVolts * kSaturatorPreGain, kSaturatorDrive) * kSaturatorPostGain / kVolts;
       orr = tanhDriveSignal(orr * kVolts * kSaturatorPreGain, kSaturatorDrive) * kSaturatorPostGain / kVolts;
     }
-    out_lr[2 * i] = ToShort(ol);
-    out_lr[2 * i + 1] = ToShort(orr);
+    s->out_l[i] = ol;
+    s->out_r[i] = orr;
+  }
+
+  // ---- brickwall limiter: Drive in, Ceiling out (RMXXXL's)
+  s->s_drive += 0.25f * (s->param[P_LIM_DRIVE] - s->s_drive);
+  s->s_ceiling += 0.25f * (s->param[P_LIM_CEILING] - s->s_ceiling);
+  s->limiter.Process(s->out_l, s->out_r, frames, s->s_drive, s->s_ceiling, s->param[P_LIM_RELEASE],
+                     static_cast<float>(kSampleRate));
+  for (int i = 0; i < frames; ++i) {
+    out_lr[2 * i] = ToShort(s->out_l[i]);
+    out_lr[2 * i + 1] = ToShort(s->out_r[i]);
   }
 }
 

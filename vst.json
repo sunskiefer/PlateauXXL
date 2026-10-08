@@ -2,7 +2,7 @@
   "name": "Plateau",
   "vendor": "ANDREALPHEUS",
   "uid": "AnPl",
-  "version": 2000,
+  "version": 3000,
   "so": "plateau.so",
   "params": "params.json",
   "effect": true,

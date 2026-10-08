@@ -14,6 +14,9 @@
 #include <string>
 #include <vector>
 
+#include "limiter.h"
+#include "limiter_ref.h"
+
 extern "C" {
 #include "engine.h"
 }
@@ -186,8 +189,9 @@ int main(int argc, char** argv) {
     const int n = 86 * kBlock;   // whole blocks, so every frame compared had its input
     std::vector<int16_t> in = Noise(n, 0.25), out;
     p.Run(&in, n, &out);
-    int diff = 0;
-    for (size_t i = 2 * kRate / 10; i < out.size() && i < in.size(); ++i) diff = abs(out[i] - in[i]) > diff ? abs(out[i] - in[i]) : diff;
+    int diff = 0;   // the limiter's look-ahead delays the output by 64 samples
+    for (size_t i = 2 * kRate / 10; i + 128 < out.size() && i < in.size(); ++i)
+      diff = abs(out[i + 128] - in[i]) > diff ? abs(out[i + 128] - in[i]) : diff;
     snprintf(msg, sizeof msg, "Dry 100 %% / Wet 0 %% passes the input through (max difference %d LSB)", diff);
     Check(diff <= 2, msg);
   }
@@ -308,6 +312,60 @@ int main(int argc, char** argv) {
     Check(first > 0.05 && later < 1e-4, msg);
   }
 
+  // ---- brickwall limiter (RMXXXL's): nothing passes the ceiling, Drive pushes into it
+  {
+    Plug p;
+    p.Set("dry", 1); p.Set("wet", 1); p.Set("decay", 0.9); p.Set("size", 1);
+    p.Set("lim_ceiling", -6.0); p.Set("lim_drive", 12.0);
+    std::vector<int16_t> in = Noise(4 * kRate, 0.9), out;
+    p.Run(&in, 4 * kRate, &out);
+    int peak = 0;   // after the settings' 30 ms glide from their defaults
+    for (size_t i = 2 * kRate / 10; i < out.size(); ++i) peak = abs(out[i]) > peak ? abs(out[i]) : peak;
+    double ceiling = 32768.0 * pow(10.0, -6.0 / 20.0);
+    snprintf(msg, sizeof msg, "limiter: loud input + 12 dB drive never passes a -6 dB ceiling (peak %.2f dBFS)", Db(peak / 32768.0));
+    Check(peak <= ceiling + 1, msg);
+    Plug d;   // a moderate signal: +12 dB of Drive makes it louder, still under the ceiling
+    d.Set("dry", 1); d.Set("wet", 0); d.Set("lim_ceiling", -6.0);
+    std::vector<int16_t> mid = Noise(2 * kRate, 0.15), flat, pushed;
+    d.Run(&mid, 2 * kRate, &flat);
+    d.Set("lim_drive", 12.0);
+    d.Run(&mid, 2 * kRate, &pushed);
+    double a = Db(Rms(flat, kRate, kRate)), b = Db(Rms(pushed, kRate, kRate));
+    snprintf(msg, sizeof msg, "limiter: Drive pushes the level into the ceiling (%.1f -> %.1f dBFS RMS)", a, b);
+    Check(b > a + 6.0, msg);
+    {   // the fast window minimum matches RMXXXL's scan, sample for sample, through changing settings
+      plateau::Limiter fast;
+      plateau::LimiterRef ref;
+      fast.Init();
+      ref.Init();
+      std::vector<int16_t> v = Noise(10 * kRate, 0.9);
+      float fl[kBlock], fr[kBlock], rl[kBlock], rr[kBlock];
+      double worst = 0;
+      for (int b = 0; b < 10 * kRate / kBlock; ++b) {
+        for (int i = 0; i < kBlock; ++i) {
+          float env = (b % 40) < 20 ? 1.0f : 0.05f;   // loud and quiet stretches, so the gain both falls and recovers
+          fl[i] = rl[i] = v[2 * (b * kBlock + i)] / 32768.0f * env;
+          fr[i] = rr[i] = v[2 * (b * kBlock + i) + 1] / 32768.0f * env;
+        }
+        float drive = (b % 97) / 8.0f, ceiling = -(b % 53) / 6.0f, rel = 10.0f + (b % 31) * 15.0f;
+        fast.Process(fl, fr, kBlock, drive, ceiling, rel, kRate);
+        ref.Process(rl, rr, kBlock, drive, ceiling, rel, kRate);
+        for (int i = 0; i < kBlock; ++i) worst = fmax(worst, fmax(fabs(fl[i] - rl[i]), fabs(fr[i] - rr[i])));
+      }
+      snprintf(msg, sizeof msg, "limiter: same output as RMXXXL's, sample for sample (largest difference %g)", worst);
+      Check(worst == 0.0, msg);
+    }
+    Plug q;   // the default ceiling (-0.3 dB) leaves a quiet signal untouched
+    q.Set("dry", 1); q.Set("wet", 0);
+    const int n = 86 * kBlock;
+    std::vector<int16_t> quiet = Noise(n, 0.1), qo;
+    q.Run(&quiet, n, &qo);
+    int diff = 0;
+    for (int i = 2 * 64; i < 2 * (n - 64); ++i) diff = abs(qo[i + 2 * 64] - quiet[i]) > diff ? abs(qo[i + 2 * 64] - quiet[i]) : diff;
+    snprintf(msg, sizeof msg, "limiter: a quiet signal passes unchanged, 64 samples late (max difference %d LSB)", diff);
+    Check(diff <= 2, msg);
+  }
+
   // ---- display text
   {
     Plug p;
@@ -316,7 +374,7 @@ int main(int argc, char** argv) {
       {"in_high", 0, "440 Hz"}, {"in_low", 10, "14 Hz"}, {"in_low", 0, "440 Hz"}, {"decay", 0.1, "0 %"},
       {"decay", 0.9999, "100 %"}, {"mod_shape", 0.5, "+0 %"}, {"mod_depth", 16, "100 %"}, {"diffusion", 10, "100 %"},
       {"size_cv", -0.5, "-50 %"}, {"lfo1_offset", 1, "+5.00 V"}, {"sq2_s16", -2.5, "-2.50 V"}, {"td_freq", 12, "+12.0 st"},
-      {"lfo2_freq", 0, "Sync"},
+      {"lfo2_freq", 0, "Sync"}, {"lim_ceiling", -0.3, "-0.3 dB"}, {"lim_drive", 6, "+6.0 dB"}, {"lim_release", 80, "80 ms"},
     };
     for (size_t i = 0; i < sizeof t / sizeof t[0]; ++i) {
       p.Set(t[i].key, t[i].v);

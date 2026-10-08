@@ -15,8 +15,8 @@ Marbles, as in VCV's Audible Instruments), plus two **step sequencers** and two 
 follow the MPC tempo.
 
 > [!NOTE]
-> **Status: 0.2.0, not yet tested on a device.** It passes its test suite on x86 (ASan + UBSan) and on the ARM build
-> under QEMU. Report anything odd under [Issues](../../issues).
+> **Status: 0.3.0.** 0.2.0 was tried on an Akai Force: the pages draw as designed. It passes its test suite on x86
+> (ASan + UBSan) and on the ARM build under QEMU. Report anything odd under [Issues](../../issues).
 
 ![The PLATEAU page](docs/img/plateau.png)
 
@@ -60,7 +60,7 @@ triggers it. Random's T clock becomes the tempo when its CLOCK is set. With "Fre
 | Tank | Hold, Clear, Tuned, Diffuse In | Hold latches; Clear fades out, empties the tank, fades back in |
 | Input filter / Reverb filter | In Low, In High, Rev Low, Rev High | Shown in Hz |
 | Modulation | Rate, Shape, Depth | The tank's four LFOs |
-| Output | Saturate | The module's soft output saturation |
+| Output / Limiter | Drive, Ceiling, Release, Saturate | The module's soft output saturation, then RMXXXL's look-ahead brickwall limiter (1.45 ms latency) |
 
 Q-Links, bank 1: Size, Diffusion, Decay, Wet, Dry, Pre-Delay, Rev Low, Rev High. Bank 2: Rate, Shape, Depth, In Low,
 In High, Hold, Clear, Tuned.

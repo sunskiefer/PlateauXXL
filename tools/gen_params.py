@@ -113,6 +113,12 @@ for n in range(1, 3):
           knob(k + "width", "Gate%d Width" % n, 0.05, 1.0, 0.5)]
 
 
+# ---- 0.3.0: brickwall limiter at the output, as in RMXXXL (Drive in, Ceiling out) ------------------------------------
+P += [knob("lim_drive", "Limiter Drive", 0.0, 18.0, 0.0, unit="dB"),
+      knob("lim_ceiling", "Ceiling", -12.0, 0.0, -0.3, unit="dB"),
+      knob("lim_release", "Limiter Release", 10.0, 500.0, 80.0, unit="ms")]
+
+
 def c_ident(key):
     return "P_" + key.upper()
 

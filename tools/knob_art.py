@@ -3,6 +3,9 @@
 
     python3 tools/knob_art.py "<skin dir>/Plugin Skins"
 
+Keep every radius at 58 or less: the filmstrip is 128 frames of 2R+10 px, and r=59 makes it exactly 16384 px tall,
+which MPC draws misaligned (the knob jumped up and down as it turned, seen on a Force, 2026-10-08).
+
 gen_vst.py writes one filmstrip per knob radius (sh_knob_r<R>.png: 128 square frames of 2R+10 px, stacked down,
 minimum first). layout.conf gives each kind of knob its own radius, and this redraws each strip from art/:
 a static background layer, the knob rotated over its VCV range, and a static highlight on top, on the colour of
@@ -38,7 +41,7 @@ KNOBS = {
     38: ("valley/Rogan1PSSmall-bg", "valley/Rogan1PSBlueSmall", "valley/Rogan1PSBlueSmall-fg", VALLEY, ROGAN, 1.0),
     39: ("valley/Rogan1PSSmall-bg", "valley/Rogan1PSRedSmall", "valley/Rogan1PSRedSmall-fg", VALLEY, ROGAN, 1.0),
     # Bogaudio LFO: Knob68 (frequency), Knob26 (sample, pulse width), Knob16 (smooth, offset, scale)
-    59: (None, "bogaudio/knob_68px", None, BOGAUDIO, ROGAN, 1.0),
+    57: (None, "bogaudio/knob_68px", None, BOGAUDIO, ROGAN, 1.0),
     42: (None, "bogaudio/knob_26px", None, BOGAUDIO, ROGAN, 1.0),
     34: (None, "bogaudio/knob_16px", None, BOGAUDIO, ROGAN, 1.0),
     # Tidal Modulator 2 / Random Sampler: VCV's Rogan 3PS, 2PS and 1PS white knobs
