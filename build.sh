@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Build Plateau for MPC OS Gen1 (armv7-a hard-float, glibc <= 2.31 so it also loads on MPC OS 2.x).
+# Build PlateauXXL for MPC OS Gen1 (armv7-a hard-float, glibc <= 2.31 so it also loads on MPC OS 2.x).
 #   ./build.sh                     (MPC_VST=../mpc-vst-plugins to use another framework checkout)
 # Needs: python3 + Pillow + cairosvg (+ the DejaVu fonts for the Mutable pages' italics), a host gcc (for shadow_art), and Zig (pip install ziglang). No Docker.
-# Output: build/package/ANDREALPHEUS - VST - Plateau/  (skin + plateau.so) and build/pluginlist-entry.xml
+# Output: build/package/ANDREALPHEUS - VST - PlateauXXL/  (skin + plateauxxl.so) and build/pluginlist-entry.xml
 set -euo pipefail
 cd "$(dirname "$0")"
 MPC_VST="${MPC_VST:-$PWD/third_party/mpc-vst-plugins}"
 ZIG="${ZIG:-python3 -m ziglang}"
-NAME="ANDREALPHEUS - VST - Plateau"
+NAME="ANDREALPHEUS - VST - PlateauXXL"
 python3 tools/gen_params.py
 python3 tools/qlinks.py --check   # every control on a Q-Link, in reading order
 mkdir -p build/host build/arm
@@ -29,9 +29,9 @@ done
 $ZIG cc $TGT $COMMON -std=gnu11 -Ibuild -c "$MPC_VST/wrapper/vst2_wrap.c" -o build/arm/vst2_wrap.o
 printf '{\n  global: VSTPluginMain;\n  local: *;\n};\n' > build/arm/exports.map
 $ZIG c++ $TGT -shared -fPIC -Wl,--no-undefined -Wl,--version-script=build/arm/exports.map -Wl,--gc-sections -Wl,-s \
-  $OBJS build/arm/vst2_wrap.o -lm -ldl -lpthread -o build/arm/plateau.so
+  $OBJS build/arm/vst2_wrap.o -lm -ldl -lpthread -o build/arm/plateauxxl.so
 PKG="build/package/$NAME"
 rm -rf build/package && mkdir -p "$PKG"
 cp -r "build/skin/$NAME/." "$PKG/"
-cp build/arm/plateau.so "$PKG/"
+cp build/arm/plateauxxl.so "$PKG/"
 echo "-> $PKG"

@@ -39,12 +39,12 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           case "$GITHUB_REF" in refs/tags/v*) ;; *) VERSION="0.0.0-dev" ;; esac
           python3 third_party/mpc-vst-plugins/tools/release.py \
-            --so build/arm/plateau.so \
-            --skin "build/skin/ANDREALPHEUS - VST - Plateau" \
+            --so build/arm/plateauxxl.so \
+            --skin "build/skin/ANDREALPHEUS - VST - PlateauXXL" \
             --entry build/pluginlist-entry.xml \
             --version "$VERSION" \
-            --about "Plateau by ANDREALPHEUS: Valley Audio's Plateau reverb for MPC OS" \
-            --repo sunskiefer/PlateauXXL --license GPL-3.0-or-later \
+            --about "PlateauXXL by ANDREALPHEUS: Valley Audio's Plateau reverb for MPC OS" \
+            --id plateauxxl --repo sunskiefer/PlateauXXL --license GPL-3.0-or-later \
             -o dist
 
       - name: Catalog check
@@ -53,7 +53,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Plateau-mpc-armv7
+          name: PlateauXXL-mpc-armv7
           path: dist/*.zip
 
       - name: Release

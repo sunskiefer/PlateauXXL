@@ -1,10 +1,10 @@
-# PlateauXXL v0.4.0
+# PlateauXXL v0.4.1
 
 **Valley Audio's Plateau reverb, patched with its own LFOs, random sources and sequencers, running natively inside
 MPC OS on the Akai Force.**
 
 PlateauXXL is a VST2 insert effect for MPC OS's built-in plugin host, made by L'Cronx (shown on the device as
-**Plateau** by **ANDREALPHEUS**). It is a port of **Plateau**, Dale Johnson's plate reverb for VCV Rack: huge,
+**PlateauXXL** by **ANDREALPHEUS**). It is a port of **Plateau**, Dale Johnson's plate reverb for VCV Rack: huge,
 smooth tails from Jon Dattorro's 1997 algorithm, a modulated tank, Hold to freeze it, Clear to empty it, and a Tuned
 mode that turns tiny tank sizes into pitched, resonant tones. On VCV Rack, Plateau comes alive through what is patched
 into its fifteen CV jacks. A Force has no cables, so PlateauXXL builds the patch in: every jack picks a source, and the
@@ -12,7 +12,7 @@ sources are VCV favourites running inside the plugin, each on a page drawn like 
 track, a submix or the master; everything sits in one insert slot, follows the MPC tempo and saves with your project.
 
 > [!NOTE]
-> **Status: 0.4.0.** 0.3.0 was tested on an Akai Force (the latest MPC OS, with MockbaMod). 0.4.0 adds Panic,
+> **Status: 0.4.1.** 0.3.0 was tested on an Akai Force (the latest MPC OS, with MockbaMod). 0.4.x adds Panic,
 > presets and the new Q-Link layout, and passes the full test suite on x86 (ASan + UBSan) and on the ARM build under
 > QEMU; it is not yet tested on the device. Report anything odd under [Issues](../../issues).
 
@@ -87,20 +87,23 @@ Clear empties the tank on each rising edge).
 
 ## Installation
 
-Download `Plateau-<version>-mpc-armv7.zip` from [Releases](../../releases), or build it (below). Unzip it and
+Download `PlateauXXL-<version>-mpc-armv7.zip` from [Releases](../../releases), or build it (below). Unzip it and
 follow the `INSTALL.md` inside. In short:
 
 ```
-scp -r Plateau-<version> root@<device-ip>:/tmp/
-ssh -t root@<device-ip> sh /tmp/Plateau-<version>/install.sh
+scp -r PlateauXXL-<version> root@<device-ip>:/tmp/
+ssh -t root@<device-ip> sh /tmp/PlateauXXL-<version>/install.sh
 ```
 
 The installer asks for confirmation (`-y` skips it), **stops MPC** (save your project first), copies the plugin
-to `/sdcard/Synths/ANDREALPHEUS - VST - Plateau/`, backs up and edits `MPC.settings`, and starts MPC again.
-Running it again upgrades in place. Then insert **Plateau** (manufacturer ANDREALPHEUS) on a track, submix or the
+to `/sdcard/Synths/ANDREALPHEUS - VST - PlateauXXL/`, backs up and edits `MPC.settings`, and starts MPC again.
+Running it again upgrades in place. Then insert **PlateauXXL** (manufacturer ANDREALPHEUS) on a track, submix or the
 master. `uninstall.sh` removes it the same way.
 
-Presets go in `/sdcard/Plateau Presets` (created on the first save), outside the plugin folder, so they survive
+Upgrading from 0.4.0 or earlier: those were installed as **Plateau**. Remove that first with the old zip's
+uninstaller (`ssh -t root@<device-ip> sh /tmp/Plateau-0.4.0/uninstall.sh`), then install this one.
+
+Presets go in `/sdcard/PlateauXXL Presets` (created on the first save), outside the plugin folder, so they survive
 updates.
 
 ## Building
@@ -111,7 +114,7 @@ Linux or WSL with Python 3 (+ Pillow, cairosvg), gcc, the DejaVu fonts and [Zig]
 ```
 git clone --recursive https://github.com/sunskiefer/PlateauXXL
 cd PlateauXXL
-./build.sh                # build/arm/plateau.so + the skin -> build/package/
+./build.sh                # build/arm/plateauxxl.so + the skin -> build/package/
 test/run_tests.sh         # the framework's host test + PlateauXXL's own suites, under ASan/UBSan
 ```
 

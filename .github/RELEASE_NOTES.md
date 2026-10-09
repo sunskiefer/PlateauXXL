@@ -2,7 +2,7 @@
 
 Put it on a track, a submix or the master: huge Dattorro plate tails, Hold to freeze the tank, Clear to empty it, Tuned mode for pitched resonances, and every one of the module's 15 CV jacks patched to a modulation source running inside the plugin. Everything sits in one insert slot, with its own touchscreen pages and Q-Links, follows the MPC tempo and saves with your project.
 
-> 🧪 **0.4.0 is built and tested offline** (x86 with ASan + UBSan, and the ARM build under QEMU); **0.3.0 was tested on an Akai Force** (the latest MPC OS with MockbaMod). New in 0.4.0: every control on a Q-Link in reading order (buttons included), Panic, 16 user presets, an IN / OUT page for the input and the limiter, a page per sequencer, and the Q-Link feel from RMXXXL 1.2.1 (switches flip once per turn, lists can't race, buttons fire on every tap). As with any third-party plugin, save your projects before installing, and report problems under **Issues**. Full list: [CHANGELOG](https://github.com/sunskiefer/PlateauXXL/blob/main/CHANGELOG.md).
+> 🧪 **0.4.1 is built and tested offline** (x86 with ASan + UBSan, and the ARM build under QEMU); **0.3.0 was tested on an Akai Force** (the latest MPC OS with MockbaMod). New in 0.4.1: the plugin is now called **PlateauXXL** on the device too. New in 0.4.0: every control on a Q-Link in reading order (buttons included), Panic, 16 user presets, an IN / OUT page for the input and the limiter, a page per sequencer, and the Q-Link feel from RMXXXL 1.2.1 (switches flip once per turn, lists can't race, buttons fire on every tap). As with any third-party plugin, save your projects before installing, and report problems under **Issues**. Full list: [CHANGELOG](https://github.com/sunskiefer/PlateauXXL/blob/main/CHANGELOG.md).
 
 ## How you play it
 1. **Set the space** with Size, Diffusion and Decay, and colour it with the input and tank filters.
@@ -21,12 +21,14 @@ Put it on a track, a submix or the master: huge Dattorro plate tails, Hold to fr
 - Root SSH access (for example MockbaMod)
 
 ## Install
-Download **Plateau-0.4.0-mpc-armv7.zip** below, unzip it, then:
+Download **PlateauXXL-0.4.1-mpc-armv7.zip** below, unzip it, then:
 
-    scp -r Plateau-0.4.0 root@<device-ip>:/tmp/
-    ssh -t root@<device-ip> sh /tmp/Plateau-0.4.0/install.sh
+    scp -r PlateauXXL-0.4.1 root@<device-ip>:/tmp/
+    ssh -t root@<device-ip> sh /tmp/PlateauXXL-0.4.1/install.sh
 
-The installer stops MPC (save first), installs the plugin, and starts MPC again. Then insert **Plateau** (manufacturer ANDREALPHEUS) as an insert effect. Presets go in `/sdcard/Plateau Presets`.
+The installer stops MPC (save first), installs the plugin, and starts MPC again. Then insert **PlateauXXL** (manufacturer ANDREALPHEUS) as an insert effect. Presets go in `/sdcard/PlateauXXL Presets`.
+
+Upgrading from 0.4.0 or earlier: those were installed as **Plateau**. Remove that first with the old zip's uninstaller (`ssh -t root@<device-ip> sh /tmp/Plateau-0.4.0/uninstall.sh`), then install this one.
 
 Full guide (every control, patching, the modulation modules, Q-Links, presets, troubleshooting): [docs/USER_GUIDE.md](https://github.com/sunskiefer/PlateauXXL/blob/main/docs/USER_GUIDE.md)
 

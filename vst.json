@@ -1,9 +1,9 @@
 {
-  "name": "Plateau",
+  "name": "PlateauXXL",
   "vendor": "ANDREALPHEUS",
   "uid": "AnPl",
-  "version": 4000,
-  "so": "plateau.so",
+  "version": 4001,
+  "so": "plateauxxl.so",
   "params": "params.json",
   "effect": true,
   "build": {
@@ -54,6 +54,6 @@
     "HAS_LFO_BPM": 1,
     "HAS_TRANSPORT": 1,
     "HAS_DISPLAY_REV": 1,
-    "MODULE_DIR": "\"/sdcard/Plateau Presets\""
+    "MODULE_DIR": "\"/sdcard/PlateauXXL Presets\""
   }
 }

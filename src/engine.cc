@@ -6,7 +6,7 @@
 //
 // Panic and presets follow RMXXXL (same author): Panic puts every parameter back to its default (the preset slot
 // stays), empties the tank and restarts the sources; 16 preset slots are files "Preset NN.txt" holding the state
-// string, in "Plateau Presets" (/sdcard/Plateau Presets on the device). Save snapshots the state on the caller's
+// string, in "PlateauXXL Presets" (/sdcard/PlateauXXL Presets on the device). Save snapshots the state on the caller's
 // thread and a worker thread writes it; Load has the worker read the file and the audio thread apply it.
 //
 // Q-Links and taps (RMXXXL 1.2.1, learned on a Force): a trigger fires on every tap (it reads back 0) and on a Q-Link
@@ -332,7 +332,7 @@ void* Create(const char* data_dir) {
   s->s_ceiling = DefaultValue(P_LIM_CEILING);
   PushControlSettings(s, 0);
   // presets: MODULE_DIR (vst.json), else beside the working directory
-  snprintf(s->preset_dir, sizeof s->preset_dir, "%s", data_dir ? data_dir : "Plateau Presets");
+  snprintf(s->preset_dir, sizeof s->preset_dir, "%s", data_dir ? data_dir : "PlateauXXL Presets");
   pthread_mutex_init(&s->preset_mutex, NULL);
   s->save_text = s->loaded_text = s->retired_text = NULL;
   s->save_slot = 0;

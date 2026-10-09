@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.4.1
+- The plugin is called **PlateauXXL** on the device (it was Plateau): plugin list, page titles, the plugin folder
+  (`ANDREALPHEUS - VST - PlateauXXL`), `plateauxxl.so`, the presets folder (`/sdcard/PlateauXXL Presets`) and the
+  catalog id `plateauxxl`. The uid stays the same. Remove an earlier Plateau install with its own uninstaller first.
+
+## 0.4.0
 - Every control is on a Q-Link, buttons and switches included, in reading order on every page: the top row left
   to right, then the next row (Q-Link 1, 2, 3, ...). `tools/qlinks.py` sets them from the screen positions and the
   build fails if one is missing or out of order. A screen with more than 16 controls has two Q-Link sub-pages.

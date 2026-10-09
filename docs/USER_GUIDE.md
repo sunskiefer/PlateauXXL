@@ -3,7 +3,7 @@
 PlateauXXL is Valley Audio's **Plateau** reverb from VCV Rack as an insert effect for MPC OS on the Akai Force, with
 the patch cables replaced by modulation sources that run inside the plugin: four **Bogaudio LFOs**, **Tidal
 Modulator 2** (Mutable Instruments Tides 2), **Random Sampler** (Mutable Instruments Marbles), and two step and two
-gate sequencers. On the device it is listed as **Plateau**, manufacturer **ANDREALPHEUS**.
+gate sequencers. On the device it is listed as **PlateauXXL**, manufacturer **ANDREALPHEUS**.
 
 - [Install](#install)
 - [The signal path](#the-signal-path)
@@ -25,18 +25,18 @@ gate sequencers. On the device it is listed as **Plateau**, manufacturer **ANDRE
 
 You need a first-generation Akai Force on MPC OS 3.x with root SSH access (for example through MockbaMod).
 
-1. Download `Plateau-<version>-mpc-armv7.zip` from [Releases](../../../releases) and unzip it on your computer.
+1. Download `PlateauXXL-<version>-mpc-armv7.zip` from [Releases](../../../releases) and unzip it on your computer.
 2. Copy the folder to the Force and run the installer (save your project first: it stops MPC):
 
    ```
-   scp -r Plateau-<version> root@<device-ip>:/tmp/
-   ssh -t root@<device-ip> sh /tmp/Plateau-<version>/install.sh
+   scp -r PlateauXXL-<version> root@<device-ip>:/tmp/
+   ssh -t root@<device-ip> sh /tmp/PlateauXXL-<version>/install.sh
    ```
 
-3. MPC starts again. Insert **Plateau** (ANDREALPHEUS) on a track, a submix or the master.
+3. MPC starts again. Insert **PlateauXXL** (ANDREALPHEUS) on a track, a submix or the master.
 
 Running the installer again upgrades in place; `uninstall.sh` in the same folder removes it. Your presets live in
-`/sdcard/Plateau Presets` and are not touched by either.
+`/sdcard/PlateauXXL Presets` and are not touched by either.
 
 ## The signal path
 
@@ -131,7 +131,7 @@ whole step) or **Width** (gate sequencers: how much of a step the gate stays hig
 3. **LOAD** brings every setting back from that slot. The line says **LOADED**.
 
 A preset holds everything: the reverb, the limiter, the CV routing, every LFO, Tidal, Random and sequencer setting.
-The slots are files in `/sdcard/Plateau Presets` (`Preset 01.txt` to `Preset 16.txt`), outside the plugin folder,
+The slots are files in `/sdcard/PlateauXXL Presets` (`Preset 01.txt` to `Preset 16.txt`), outside the plugin folder,
 so they survive updates and can be copied to another device or backed up. Saving and loading happen off the audio
 thread, so they never click. The Force has no keyboard on plugin screens, so slots are numbered, not named.
 
@@ -280,6 +280,6 @@ preset straight after. The screen and the Q-Links follow within a fraction of a 
 | A source doesn't move anything | Check the input's attenuverter isn't at 0 %, and that the source runs (an LFO at Scale 0 %, a sequencer with all steps at 0 V, a gate sequencer with no steps on) |
 | The tempo-locked sources don't follow | They use the project tempo; press play once so they lock to the song position |
 | The tail never stops | Hold is on, or its input is on a gate that stays high; press Clear or Panic |
-| A preset says SAVE FAILED | The card or internal storage is full or read-only. Check `/sdcard/Plateau Presets` over SSH |
+| A preset says SAVE FAILED | The card or internal storage is full or read-only. Check `/sdcard/PlateauXXL Presets` over SSH |
 | The sound is crushed | Drive is high or Ceiling low on IN / OUT; Panic resets them |
 | Something sounds wrong after a lot of changes | Panic, then load your preset |
