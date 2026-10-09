@@ -7,6 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 MPC_VST="${MPC_VST:-$PWD/third_party/mpc-vst-plugins}"
 python3 tools/gen_params.py
+python3 tools/qlinks.py --check
 bash "$MPC_VST/tools/test_port.sh" vst.json
 SRCS=$(python3 -c "import json; print(' '.join(json.load(open('vst.json'))['build']['sources']))")
 CFLAGS=$(python3 -c "import json; print(' '.join(json.load(open('vst.json'))['build']['cflags']))")

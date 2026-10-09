@@ -49,6 +49,10 @@ struct Marbles {
     t_generator.Init(&random_stream, sr);
     xy_generator.Init(&random_stream, sr);
     for (int i = 0; i < 6; i++) xy_generator.LoadScale(i, preset_scales[i]);
+    // Y too. The firmware and VCV load scales into X1-X3 only, so Y keeps OutputChannel::Init's placeholder (one
+    // degree of weight 0) and, once Steps quantizes it, reads past the 16-entry voltage table (level first = 0xff;
+    // found under UBSan). Y follows X's scale here, which is what the Y output's Steps control implies.
+    for (int i = 0; i < 6; i++) xy_generator.LoadScale(marbles::kNumXChannels, i, preset_scales[i]);
   }
 
   // out: T1, T2, T3, Y, X1, X2, X3 is the module's jack order; here X1, X2, X3, Y, T1, T2, T3 (the source list's)

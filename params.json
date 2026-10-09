@@ -175,7 +175,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "dry_cv",
@@ -210,7 +211,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "wet_cv",
@@ -245,7 +247,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "pre_delay_cv",
@@ -280,7 +283,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "in_low_cv",
@@ -315,7 +319,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "in_high_cv",
@@ -350,7 +355,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "size_cv",
@@ -385,7 +391,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "diffusion_cv",
@@ -420,7 +427,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "decay_cv",
@@ -455,7 +463,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "rv_high_cv",
@@ -490,7 +499,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "rv_low_cv",
@@ -525,7 +535,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mod_rate_cv",
@@ -560,7 +571,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mod_shape_cv",
@@ -595,7 +607,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mod_depth_cv",
@@ -630,7 +643,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "clear_src",
@@ -657,7 +671,8 @@
     "Gate 1",
     "Gate 2"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo1_wave",
@@ -670,7 +685,8 @@
     "Square",
     "Stepped"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo1_sync",
@@ -694,7 +710,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 4
+   "default": 4,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo1_freq",
@@ -764,7 +781,8 @@
     "Square",
     "Stepped"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo2_sync",
@@ -788,7 +806,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 4
+   "default": 4,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo2_freq",
@@ -858,7 +877,8 @@
     "Square",
     "Stepped"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo3_sync",
@@ -882,7 +902,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 4
+   "default": 4,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo3_freq",
@@ -952,7 +973,8 @@
     "Square",
     "Stepped"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo4_sync",
@@ -976,7 +998,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 4
+   "default": 4,
+   "qlink_ticks": 3
   },
   {
    "key": "lfo4_freq",
@@ -1083,7 +1106,8 @@
     "Medium",
     "High"
    ],
-   "default": 1
+   "default": 1,
+   "qlink_ticks": 3
   },
   {
    "key": "td_output",
@@ -1094,7 +1118,8 @@
     "Slope/Phase",
     "Frequency"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "td_ramp",
@@ -1104,7 +1129,8 @@
     "Cycle",
     "AR"
    ],
-   "default": 1
+   "default": 1,
+   "qlink_ticks": 3
   },
   {
    "key": "td_sync",
@@ -1128,7 +1154,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_t_rate",
@@ -1162,7 +1189,8 @@
     "Clusters",
     "Drums"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_t_range",
@@ -1172,7 +1200,8 @@
     "x1",
     "x4"
    ],
-   "default": 1
+   "default": 1,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_deja_vu",
@@ -1240,7 +1269,8 @@
     "Bump",
     "Tilt"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_x_range",
@@ -1250,7 +1280,8 @@
     "+5 V",
     "+/-5 V"
    ],
-   "default": 1
+   "default": 1,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_x_scale",
@@ -1263,7 +1294,8 @@
     "Bhairav",
     "Shri"
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_y_div",
@@ -1282,7 +1314,8 @@
     "1/2",
     "1/1"
    ],
-   "default": 8
+   "default": 8,
+   "qlink_ticks": 3
   },
   {
    "key": "mb_sync",
@@ -1306,7 +1339,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 0
+   "default": 0,
+   "qlink_ticks": 3
   },
   {
    "key": "sq1_s1",
@@ -1466,7 +1500,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 7
+   "default": 7,
+   "qlink_ticks": 3
   },
   {
    "key": "sq1_slew",
@@ -1634,7 +1669,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 7
+   "default": 7,
+   "qlink_ticks": 3
   },
   {
    "key": "sq2_slew",
@@ -1818,7 +1854,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 7
+   "default": 7,
+   "qlink_ticks": 3
   },
   {
    "key": "gt1_width",
@@ -2002,7 +2039,8 @@
     "1/4 .",
     "1/8 ."
    ],
-   "default": 7
+   "default": 7,
+   "qlink_ticks": 3
   },
   {
    "key": "gt2_width",
@@ -2038,6 +2076,65 @@
    "default": 80.0,
    "dynamic_display": true,
    "unit": "ms"
+  },
+  {
+   "key": "panic",
+   "name": "Panic",
+   "min": 0.0,
+   "max": 1.0,
+   "momentary": true,
+   "type": "trigger",
+   "default": 0.0
+  },
+  {
+   "key": "preset_slot",
+   "name": "Preset",
+   "options": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16"
+   ],
+   "default": 0,
+   "qlink_ticks": 3
+  },
+  {
+   "key": "preset_save",
+   "name": "Save Preset",
+   "min": 0.0,
+   "max": 1.0,
+   "momentary": true,
+   "type": "trigger",
+   "default": 0.0
+  },
+  {
+   "key": "preset_load",
+   "name": "Load Preset",
+   "min": 0.0,
+   "max": 1.0,
+   "momentary": true,
+   "type": "trigger",
+   "default": 0.0
+  },
+  {
+   "key": "preset_info",
+   "name": "Preset Status",
+   "min": 0.0,
+   "max": 1.0,
+   "default": 0.0,
+   "dynamic_display": true
   }
  ]
 }

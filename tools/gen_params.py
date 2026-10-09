@@ -119,6 +119,22 @@ P += [knob("lim_drive", "Limiter Drive", 0.0, 18.0, 0.0, unit="dB"),
       knob("lim_release", "Limiter Release", 10.0, 500.0, 80.0, unit="ms")]
 
 
+# ---- 0.3.0: Panic and user presets, as in RMXXXL ------------------------------------------------------------------
+P += [{"key": "panic", "name": "Panic", "min": 0.0, "max": 1.0, "momentary": True, "type": "trigger", "default": 0.0},
+      opts("preset_slot", "Preset", [str(i) for i in range(1, 17)], 0, qlink_ticks=3),
+      {"key": "preset_save", "name": "Save Preset", "min": 0.0, "max": 1.0, "momentary": True, "type": "trigger",
+       "default": 0.0},
+      {"key": "preset_load", "name": "Load Preset", "min": 0.0, "max": 1.0, "momentary": True, "type": "trigger",
+       "default": 0.0},
+      {"key": "preset_info", "name": "Preset Status", "min": 0.0, "max": 1.0, "default": 0.0, "dynamic_display": True}]
+
+# Q-Link feel on the Force (RMXXXL 1.2.1): option lists of more than two step once per 3 nudges (and the engine holds
+# one-step moves to one per 0.2 s); on/off switches take every nudge and the engine flips them once per turn.
+for _p in P:
+    if len(_p.get("options") or []) > 2:
+        _p.setdefault("qlink_ticks", 3)
+
+
 def c_ident(key):
     return "P_" + key.upper()
 

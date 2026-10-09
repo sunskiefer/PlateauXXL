@@ -2,7 +2,7 @@
   "name": "Plateau",
   "vendor": "ANDREALPHEUS",
   "uid": "AnPl",
-  "version": 3000,
+  "version": 4000,
   "so": "plateau.so",
   "params": "params.json",
   "effect": true,
@@ -52,6 +52,8 @@
   "title_font": "art/fonts/TitilliumWeb-SemiBold.ttf",
   "defines": {
     "HAS_LFO_BPM": 1,
-    "HAS_TRANSPORT": 1
+    "HAS_TRANSPORT": 1,
+    "HAS_DISPLAY_REV": 1,
+    "MODULE_DIR": "\"/sdcard/Plateau Presets\""
   }
 }

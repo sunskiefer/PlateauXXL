@@ -15,7 +15,7 @@ Marbles, as in VCV's Audible Instruments), plus two **step sequencers** and two 
 follow the MPC tempo.
 
 > [!NOTE]
-> **Status: 0.3.0.** 0.2.0 was tried on an Akai Force: the pages draw as designed. It passes its test suite on x86
+> **Status: 0.4.0.** 0.2.0 was tried on an Akai Force: the pages draw as designed. It passes its test suite on x86
 > (ASan + UBSan) and on the ARM build under QEMU. Report anything odd under [Issues](../../issues).
 
 ![The PLATEAU page](docs/img/plateau.png)
@@ -25,17 +25,40 @@ follow the MPC tempo.
 | | | |
 | --- | --- | --- |
 | ![LFO](docs/img/lfo.png) | ![TIDAL](docs/img/tidal.png) | ![RANDOM](docs/img/random.png) |
-| ![CV IN](docs/img/cv-in.png) | ![SEQ](docs/img/seq.png) | ![GATES](docs/img/gates.png) |
+| ![IN / OUT](docs/img/in-out.png) | ![PRESETS](docs/img/presets.png) | ![CV IN](docs/img/cv-in.png) |
 
 ## Pages
 
 | Page | Sub-pages | What |
 | --- | --- | --- |
-| PLATEAU | | The reverb, in the VCV panel's dark colours and Valley's knobs |
+| PLATEAU | PLATEAU | The reverb and PANIC, in the VCV panel's dark colours and Valley's knobs |
+| | IN / OUT, SEQ SET | One screen: Dry, Wet, Pre-Delay, the limiter and Saturate (IN / OUT's Q-Links); the four sequencers' Rate, Length and Slew / Width (SEQ SET's) |
+| | PRESETS | 16 slots, SAVE, LOAD |
 | CV IN | CV 1, CV 2 | A source and an attenuverter for each of the module's 15 CV inputs |
 | LFO | LFO 1-4 | Bogaudio LFO: frequency or tempo sync, Slow, sample, pulse width, smooth, offset, scale, and which wave goes out |
-| TIDAL / RANDOM | TIDAL, RANDOM | Tidal Modulator 2 (Tides 2) and Random Sampler (Marbles), on light grey panels with VCV's Rogan knobs |
-| SEQ | SEQ 1, SEQ 2, GATES | Two 16-step CV sequencers (+/-5 V, slew) and two 16-step gate sequencers |
+| TIDAL / RANDOM | TIDAL, RANDOM 1, RANDOM 2 | Tidal Modulator 2 (Tides 2) and Random Sampler (Marbles, one screen, two Q-Link sub-pages), on light grey panels with VCV's Rogan knobs |
+| SEQ | SEQ 1, SEQ 2, GATE 1, GATE 2 | Two 16-step CV sequencers (+/-5 V) and two 16-step gate sequencers |
+
+### Q-Links
+
+Every control is on a Q-Link, buttons and switches too, in reading order: the top row left to right, then the next
+row, and so on (Q-Link 1, 2, 3, ...; 1-8 on knob bank 1, 9-16 on bank 2). A page has at most 16, so a screen with
+more controls has two Q-Link sub-pages showing the same screen (IN / OUT and SEQ SET, RANDOM 1 and 2).
+
+- **Knobs** turn as usual.
+- **On/off switches** flip once per turn, either way.
+- **Option lists** move one option per step, at most one every 0.2 s, so a fast turn doesn't race through them.
+- **Buttons** (Clear, Panic, Save, Load) fire on a turn to the right, once per turn.
+
+### Panic and presets
+
+**PANIC** puts every setting back to its default, as a freshly inserted Plateau: the reverb, the CV routing, every
+source and sequencer. It empties the tank and restarts the sources. Only the preset slot stays.
+
+**Presets:** pick a slot (1-16) on PRESETS, then **SAVE** or **LOAD**. The line beside them says STORED, EMPTY,
+SAVED or LOADED. A preset holds every setting. The slots are files in `/sdcard/Plateau Presets` (`Preset 01.txt` to
+`Preset 16.txt`), outside the plugin folder, so they survive updates and can be copied to another device. SAVE
+overwrites the slot without asking.
 
 ### Sources a CV input can pick
 
@@ -51,19 +74,17 @@ The LFOs, Tidal, Random and the sequencers follow the MPC tempo; pressing play r
 would. Tidal in Cycle mode locks to the tempo (Frequency then picks a ratio), and in AD or AR mode each tempo division
 triggers it. Random's T clock becomes the tempo when its CLOCK is set. With "Free" they run on their own rate knobs.
 
-## Controls (PLATEAU page)
+## Controls (PLATEAU and IN / OUT)
 
 | Section | Controls | Notes |
 | --- | --- | --- |
 | Reverb | Size, Diffusion, Decay | Size glides like the VCV knob; Tuned changes its scale |
 | Input | Dry, Wet, Pre-Delay | Pre-delay up to 500 ms |
-| Tank | Hold, Clear, Tuned, Diffuse In | Hold latches; Clear fades out, empties the tank, fades back in |
+| Tank | Hold, Clear, Tuned, Diffuse In, Panic | Hold latches; Clear fades out, empties the tank, fades back in |
 | Input filter / Reverb filter | In Low, In High, Rev Low, Rev High | Shown in Hz |
 | Modulation | Rate, Shape, Depth | The tank's four LFOs |
 | Output / Limiter | Drive, Ceiling, Release, Saturate | The module's soft output saturation, then RMXXXL's look-ahead brickwall limiter (1.45 ms latency) |
 
-Q-Links, bank 1: Size, Diffusion, Decay, Wet, Dry, Pre-Delay, Rev Low, Rev High. Bank 2: Rate, Shape, Depth, In Low,
-In High, Hold, Clear, Tuned.
 
 ## Requirements
 
@@ -91,8 +112,8 @@ Linux or WSL with Python 3, gcc and [Zig](https://ziglang.org/) (`pip install zi
 DejaVu fonts. No Docker.
 
 ```
-git clone --recursive https://github.com/sunskiefer/Plateau-MPC
-cd Plateau-MPC
+git clone --recursive https://github.com/sunskiefer/PlateauXXL
+cd PlateauXXL
 ./build.sh                # build/arm/plateau.so + the skin -> build/package/
 test/run_tests.sh         # the framework's host test + the sources' and the reverb's tests, under ASan/UBSan
 ```

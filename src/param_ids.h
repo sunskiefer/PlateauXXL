@@ -189,7 +189,12 @@ enum ParamId {
   P_LIM_DRIVE = 184,
   P_LIM_CEILING = 185,
   P_LIM_RELEASE = 186,
-  P_COUNT = 187
+  P_PANIC = 187,
+  P_PRESET_SLOT = 188,
+  P_PRESET_SAVE = 189,
+  P_PRESET_LOAD = 190,
+  P_PRESET_INFO = 191,
+  P_COUNT = 192
 };
 
 static const int kNumSources = 20;

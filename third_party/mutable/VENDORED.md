@@ -20,7 +20,8 @@ None. The files are byte-identical to the upstream commits.
 The VCV modules' glue (VCV Audible Instruments `src/Tides2.cpp` and `src/Marbles.cpp`, GPL-3.0-or-later, Andrew Belt)
 is not vendored; their `process()` code is re-written without Rack in `src/sources.cc` (`Tides`) and
 `src/marbles_source.cc`, with the MPC tempo on the CLOCK / T CLOCK inputs. Marbles' six preset scales are copied
-from `src/Marbles.cpp` into `src/marbles_scales.inc`. The names follow VCV's: "Tidal Modulator 2" and "Random
+from `src/Marbles.cpp` into `src/marbles_scales.inc`, and loaded into the Y channel too (the firmware and VCV load
+them into X1-X3 only, which leaves Y reading past its scale table once Steps quantizes it; found under UBSan). The names follow VCV's: "Tidal Modulator 2" and "Random
 Sampler". Mutable Instruments' panel artwork is not used (VCV distributes it by permission only); the pages are
 drawn here in the panels' colours and layout style.
 

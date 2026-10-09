@@ -9,6 +9,7 @@ MPC_VST="${MPC_VST:-$PWD/third_party/mpc-vst-plugins}"
 ZIG="${ZIG:-python3 -m ziglang}"
 NAME="ANDREALPHEUS - VST - Plateau"
 python3 tools/gen_params.py
+python3 tools/qlinks.py --check   # every control on a Q-Link, in reading order
 mkdir -p build/host build/arm
 [ -x build/host/shadow_art ] || gcc -O2 -w -I"$MPC_VST/tools/vendor/force-shadow/tools" -x c -o build/host/shadow_art "$MPC_VST/tools/shadow_art.c" -lm
 rm -rf build/skin

@@ -6,7 +6,8 @@ Modulator 2, Random Sampler, two step and two gate sequencers), tempo-synced; ea
 
 ## Next: on the Force
 - 0.2.0 seen on a Force (2026-10-08): pages draw as designed; the LFO FREQ knob jumped (fixed in 0.3.0).
-- Install 0.3.0: the FREQ knob, the limiter, and playing every source; popups, Q-Links, project save/reload.
+- Install 0.4.0: the FREQ knob, the limiter, Panic, presets, the Q-Link order and feel on every page, playing every
+  source; popups, project save/reload.
 - CPU: `tools/bench.sh build/arm/plateau.so <device-ip> -j` (docs/BENCH.md), once with nothing patched and once with
   every source in use (the heaviest case measured offline costs about twice the reverb alone).
 - Record the results in `tested.json`, then release.

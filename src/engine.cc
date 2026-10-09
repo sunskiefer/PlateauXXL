@@ -4,6 +4,15 @@
 // this file is the Plateau module's control layer (Plateau.cpp, process() and getParameters()) without VCV Rack,
 // driving it from MPC parameters through the mpc-vst-plugins engine interface (wrapper/engine.h).
 //
+// Panic and presets follow RMXXXL (same author): Panic puts every parameter back to its default (the preset slot
+// stays), empties the tank and restarts the sources; 16 preset slots are files "Preset NN.txt" holding the state
+// string, in "Plateau Presets" (/sdcard/Plateau Presets on the device). Save snapshots the state on the caller's
+// thread and a worker thread writes it; Load has the worker read the file and the audio thread apply it.
+//
+// Q-Links and taps (RMXXXL 1.2.1, learned on a Force): a trigger fires on every tap (it reads back 0) and on a Q-Link
+// turn to the right, once per turn; an on/off switch flips once per turn either way; an option list moves at most
+// one step per 0.2 s. A turn is a burst of sets: sets closer than kGestureFrames are one turn.
+//
 // CV inputs: on VCV, Plateau's character comes from what is patched into its jacks. Here each CV input picks one of
 // the built-in sources (sources.h) and has the module's own attenuverter; the CV math is getParameters()'s, in volts.
 //
@@ -17,6 +26,10 @@
 #include <string.h>
 
 #include <new>
+
+#include <pthread.h>
+#include <sys/stat.h>
+#include <time.h>
 
 #include "Plateau/Dattorro.hpp"
 #include "dsp/shaping/NonLinear.hpp"
@@ -35,7 +48,11 @@ namespace {
 using plateau::kMaxBlock;
 
 const double kSampleRate = 44100.0;
-const int kCtl = 8;   // CV is applied every 8 frames (5.5 kHz); the sources themselves run at the audio rate
+const int kCtl = 8;
+const uint64_t kStepLockFrames = 8820;   // 0.2 s: the shortest gap between two one-step moves of an option list
+const uint64_t kGestureFrames = 15435;   // 0.35 s: sets of a switch or trigger closer than this are one turn
+const int kPresetSlots = 16;
+const int kStateMax = 8192;              // the wrapper's chunk buffer   // CV is applied every 8 frames (5.5 kHz); the sources themselves run at the audio rate
 
 // Plateau.hpp constants.
 const float kSizeMin = 0.0025f;
@@ -78,6 +95,28 @@ struct Instance {
   // last block of source voltages (rendered at the start of each block)
   float src[kNumSources][kMaxBlock];
   float out_l[kMaxBlock], out_r[kMaxBlock];   // the block before the limiter
+  // Q-Links: when each parameter was last set (switches, triggers) or last moved one step (lists)
+  uint64_t frames;                     // audio frames processed
+  uint64_t last_touch[P_COUNT];
+  uint64_t last_step[P_COUNT];
+  bool loading;                        // LoadState: project or preset values are set outright
+  volatile int display_rev;            // bumped when the engine changes a value itself (wrapper HAS_DISPLAY_REV)
+  volatile int panic_pending;
+  // presets (file I/O on the worker thread)
+  char preset_dir[512];
+  pthread_mutex_t preset_mutex;        // guards save_text / save_slot / load_slot (screen thread vs worker)
+  char* save_text;                     // a snapshot waiting to be written (the worker frees it)
+  int save_slot, load_slot;
+  char* loaded_text;                   // read by the worker, applied by the audio thread (atomic hand-over)
+  char* retired_text;                  // applied, handed back to the worker to free
+  volatile unsigned slot_used;         // bit per slot: a file exists
+  volatile int preset_status;          // 0 idle, 1 saved, 2 loaded, 3 save failed, 4 empty slot, 5 load failed
+  volatile int status_slot;
+  pthread_t worker;
+  bool worker_running;
+  volatile bool worker_quit;
+  pthread_mutex_t worker_mutex;
+  pthread_cond_t worker_wake;
 
   Instance() : reverb(kSampleRate, 16.0, kSizeMax) {}
 };
@@ -171,8 +210,102 @@ void PushControlSettings(Instance* s, int i) {
   s->clear_cv_high = clear_high;
 }
 
+// ------------------------------------------------------------------------------------------------ presets
+void PresetPath(const Instance* s, int slot, char* buf, size_t len) {
+  snprintf(buf, len, "%s/Preset %02d.txt", s->preset_dir, slot + 1);
+}
+
+void ScanPresets(Instance* s) {
+  unsigned used = 0;
+  char path[600];
+  for (int i = 0; i < kPresetSlots; ++i) {
+    struct stat st;
+    PresetPath(s, i, path, sizeof path);
+    if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) used |= 1u << i;
+  }
+  s->slot_used = used;
+}
+
+void SetPresetStatus(Instance* s, int slot, int status) {
+  s->status_slot = slot;
+  s->preset_status = status;
+  __atomic_add_fetch(&s->display_rev, 1, __ATOMIC_RELAXED);
+}
+
+bool WriteText(const char* dir, const char* path, const char* text) {
+  mkdir(dir, 0777);
+  char tmp[640];
+  snprintf(tmp, sizeof tmp, "%s.tmp", path);
+  FILE* f = fopen(tmp, "w");
+  if (!f) return false;
+  size_t len = strlen(text);
+  bool ok = fwrite(text, 1, len, f) == len;
+  ok = (fclose(f) == 0) && ok;
+  if (ok) ok = rename(tmp, path) == 0;
+  if (!ok) remove(tmp);
+  return ok;
+}
+
+char* ReadText(const char* path) {
+  FILE* f = fopen(path, "r");
+  if (!f) return NULL;
+  char* buf = static_cast<char*>(malloc(kStateMax));
+  size_t len = buf ? fread(buf, 1, kStateMax - 1, f) : 0;
+  fclose(f);
+  if (!buf) return NULL;
+  buf[len] = 0;
+  return buf;
+}
+
+// Worker side: write a pending save, read a pending load, free what the audio thread gave back.
+void PresetWork(Instance* s) {
+  free(__atomic_exchange_n(&s->retired_text, (char*)NULL, __ATOMIC_ACQ_REL));
+  pthread_mutex_lock(&s->preset_mutex);
+  char* text = s->save_text;
+  int save_slot = s->save_slot, load_slot = s->load_slot;
+  s->save_text = NULL;
+  s->load_slot = -1;
+  pthread_mutex_unlock(&s->preset_mutex);
+  char path[600];
+  if (text) {
+    PresetPath(s, save_slot, path, sizeof path);
+    bool ok = WriteText(s->preset_dir, path, text);
+    free(text);
+    if (ok) s->slot_used = s->slot_used | (1u << save_slot);
+    SetPresetStatus(s, save_slot, ok ? 1 : 3);
+  }
+  if (load_slot >= 0) {
+    PresetPath(s, load_slot, path, sizeof path);
+    char* loaded = ReadText(path);
+    if (!loaded) {
+      s->slot_used = s->slot_used & ~(1u << load_slot);
+      SetPresetStatus(s, load_slot, 4);
+    } else {
+      s->status_slot = load_slot;
+      free(__atomic_exchange_n(&s->loaded_text, loaded, __ATOMIC_ACQ_REL));   // an unapplied older load is dropped
+    }
+  }
+}
+
+void* WorkerLoop(void* arg) {
+  Instance* s = static_cast<Instance*>(arg);
+  while (!s->worker_quit) {
+    pthread_mutex_lock(&s->worker_mutex);
+    timespec until;
+    clock_gettime(CLOCK_REALTIME, &until);
+    until.tv_nsec += 20000000;   // 20 ms
+    if (until.tv_nsec >= 1000000000) { until.tv_sec += 1; until.tv_nsec -= 1000000000; }
+    if (!s->worker_quit) pthread_cond_timedwait(&s->worker_wake, &s->worker_mutex, &until);
+    pthread_mutex_unlock(&s->worker_mutex);
+    PresetWork(s);
+  }
+  return NULL;
+}
+
 // ------------------------------------------------------------------------------------------------ engine interface
-void* Create(const char*) {
+void Destroy(void* inst);
+
+void* Create(const char* data_dir) {
   Instance* s = new (std::nothrow) Instance();
   if (!s) return NULL;
   for (int p = 0; p < P_COUNT; ++p) s->param[p] = DefaultValue(p);
@@ -186,16 +319,52 @@ void* Create(const char*) {
   s->clear_stage = 0;
   s->env = 1.0f;
   memset(s->src, 0, sizeof s->src);
+  s->frames = 0;
+  memset(s->last_touch, 0, sizeof s->last_touch);
+  memset(s->last_step, 0, sizeof s->last_step);
+  s->loading = false;
+  s->display_rev = 0;
+  s->panic_pending = 0;
   s->reverb.setSampleRate(kSampleRate);
   s->sources.Init(static_cast<float>(kSampleRate));
   s->limiter.Init();
   s->s_drive = DefaultValue(P_LIM_DRIVE);
   s->s_ceiling = DefaultValue(P_LIM_CEILING);
   PushControlSettings(s, 0);
+  // presets: MODULE_DIR (vst.json), else beside the working directory
+  snprintf(s->preset_dir, sizeof s->preset_dir, "%s", data_dir ? data_dir : "Plateau Presets");
+  pthread_mutex_init(&s->preset_mutex, NULL);
+  s->save_text = s->loaded_text = s->retired_text = NULL;
+  s->save_slot = 0;
+  s->load_slot = -1;
+  s->preset_status = 0;
+  s->status_slot = -1;
+  ScanPresets(s);
+  s->worker_quit = false;
+  pthread_mutex_init(&s->worker_mutex, NULL);
+  pthread_cond_init(&s->worker_wake, NULL);
+  s->worker_running = pthread_create(&s->worker, NULL, WorkerLoop, s) == 0;
   return s;
 }
 
-void Destroy(void* inst) { delete static_cast<Instance*>(inst); }
+void Destroy(void* inst) {
+  Instance* s = static_cast<Instance*>(inst);
+  if (!s) return;
+  if (s->worker_running) {
+    pthread_mutex_lock(&s->worker_mutex);
+    s->worker_quit = true;
+    pthread_cond_signal(&s->worker_wake);
+    pthread_mutex_unlock(&s->worker_mutex);
+    pthread_join(s->worker, NULL);
+  }
+  pthread_cond_destroy(&s->worker_wake);
+  pthread_mutex_destroy(&s->worker_mutex);
+  pthread_mutex_destroy(&s->preset_mutex);
+  free(s->save_text);
+  free(s->loaded_text);
+  free(s->retired_text);
+  delete s;
+}
 
 void Midi(void*, const uint8_t*, int) {}
 
@@ -208,8 +377,22 @@ int FindParam(const char* key, size_t len) {
 
 void SetParam(void* inst, const char* key, const char* val);
 
-void LoadState(Instance* s, const char* state) {
+// Not saved or loaded: triggers and the preset status readout. Presets also leave the slot alone.
+bool StateSkips(int p) { return PARAMS[p].momentary || p == P_PRESET_INFO; }
+
+int SaveState(const Instance* s, char* buf, int buf_len) {
+  int len = 0;
+  for (int p = 0; p < P_COUNT && len < buf_len; ++p) {
+    if (StateSkips(p)) continue;
+    len += snprintf(buf + len, buf_len - len, "%s=%g;", PARAMS[p].key, s->param[p]);
+  }
+  return len < buf_len ? len : buf_len - 1;
+}
+
+// preset: a user preset (keeps the slot) rather than MPC restoring a project.
+void LoadState(Instance* s, const char* state, bool preset) {
   char item[64];
+  s->loading = true;
   while (*state) {
     size_t n = strcspn(state, ";");
     if (n < sizeof item) {
@@ -218,26 +401,39 @@ void LoadState(Instance* s, const char* state) {
       char* eq = strchr(item, '=');
       if (eq) {
         *eq = 0;
-        if (strcmp(item, "state")) SetParam(s, item, eq + 1);
+        if (strcmp(item, "state") && !(preset && !strcmp(item, "preset_slot"))) SetParam(s, item, eq + 1);
       }
     }
     state += n;
     if (*state == ';') ++state;
   }
+  s->loading = false;
 }
 
-int SaveState(const Instance* s, char* buf, int buf_len) {
-  int len = 0;
-  for (int p = 0; p < P_COUNT && len < buf_len; ++p) {
-    if (PARAMS[p].momentary) continue;
-    len += snprintf(buf + len, buf_len - len, "%s=%g;", PARAMS[p].key, s->param[p]);
-  }
-  return len < buf_len ? len : buf_len - 1;
+// Screen side of a preset save: snapshot the state now (the worker writes the file).
+void RequestSave(Instance* s) {
+  char* text = static_cast<char*>(malloc(kStateMax));
+  if (!text) return;
+  SaveState(s, text, kStateMax);
+  pthread_mutex_lock(&s->preset_mutex);
+  free(s->save_text);
+  s->save_text = text;
+  s->save_slot = Option(s, P_PRESET_SLOT);
+  pthread_mutex_unlock(&s->preset_mutex);
 }
+
+void RequestLoad(Instance* s) {
+  pthread_mutex_lock(&s->preset_mutex);
+  s->load_slot = Option(s, P_PRESET_SLOT);
+  pthread_mutex_unlock(&s->preset_mutex);
+}
+
+// The on/off switches: two-option parameters drawn as toggles.
+bool IsSwitch(int p) { return PARAMS[p].nopts == 2; }
 
 void SetParam(void* inst, const char* key, const char* val) {
   Instance* s = static_cast<Instance*>(inst);
-  if (!strcmp(key, "state")) { LoadState(s, val); return; }
+  if (!strcmp(key, "state")) { LoadState(s, val, false); return; }
   if (!strcmp(key, "lfo_bpm")) {   // the MPC tempo (vst.json HAS_LFO_BPM)
     float b = static_cast<float>(atof(val));
     if (b >= 20.0f && b <= 400.0f) s->bpm = b;
@@ -248,10 +444,67 @@ void SetParam(void* inst, const char* key, const char* val) {
     return;
   }
   int p = FindParam(key, strlen(key));
-  if (p < 0) return;
+  if (p < 0 || p == P_PRESET_INFO) return;
   float v = Clamp(static_cast<float>(atof(val)), MinOf(p), MaxOf(p));
-  if (p == P_CLEAR && v > 0.5f && s->param[p] <= 0.5f) s->clear_pending = 1;
+  uint64_t now = s->frames ? s->frames : 1;
+  if (PARAMS[p].momentary) {
+    // Triggers read back 0 at once, so a screen tap (which sends the opposite of what it read) always sends 1.
+    // A Q-Link turn to the right sends small values above 0: it fires once per turn.
+    if (s->loading || v <= 0.0f) return;
+    bool tap = v > 0.5f;
+    bool in_gesture = s->last_touch[p] != 0 && now - s->last_touch[p] < kGestureFrames;
+    s->last_touch[p] = now;
+    if (!tap && in_gesture) return;
+    if (p == P_CLEAR) s->clear_pending = 1;
+    if (p == P_PANIC) s->panic_pending = 1;
+    if (p == P_PRESET_SAVE) RequestSave(s);
+    if (p == P_PRESET_LOAD) RequestLoad(s);
+    if (s->worker_running && (p == P_PRESET_SAVE || p == P_PRESET_LOAD)) pthread_cond_signal(&s->worker_wake);
+    return;
+  }
+  if (IsSwitch(p) && !s->loading) {
+    // A Q-Link turn either way flips the switch, once per turn; a tap is a turn of one. The rest of a turn is
+    // ignored, and display_rev puts MPC's own guess back to ours.
+    bool in_gesture = s->last_touch[p] != 0 && now - s->last_touch[p] < kGestureFrames;
+    s->last_touch[p] = now;
+    if (in_gesture) { ++s->display_rev; return; }
+    int cur = Option(s, p), want = static_cast<int>(v + 0.5f);
+    s->param[p] = static_cast<float>(want != cur ? want : 1 - cur);
+    ++s->display_rev;
+    return;
+  }
+  if (PARAMS[p].nopts > 2 && !s->loading) {
+    // One step per kStepLockFrames of audio time however fast a Q-Link turns; a jump of more than one step (a tap
+    // on another option) is never held back.
+    int from = Option(s, p), to = static_cast<int>(v + 0.5f);
+    if (to - from == 1 || from - to == 1) {
+      if (s->last_step[p] != 0 && s->frames - s->last_step[p] < kStepLockFrames) { ++s->display_rev; return; }
+      s->last_step[p] = now;
+    }
+  }
   s->param[p] = v;
+}
+
+// Every parameter back to its default except the preset slot (the knobs follow through display_rev), the tank
+// emptied, the sources restarted, the limiter reset.
+void Panic(Instance* s) {
+  for (int p = 0; p < P_COUNT; ++p) {
+    if (p == P_PRESET_SLOT) continue;
+    s->param[p] = DefaultValue(p);
+  }
+  s->reverb.clear();
+  if (s->frozen) { s->frozen = false; s->reverb.freeze(false); }
+  s->clear_pending = 0;
+  s->clear_stage = 0;
+  s->env = 1.0f;
+  s->sources.Init(static_cast<float>(kSampleRate));
+  memset(s->src, 0, sizeof s->src);
+  s->limiter.Init();
+  s->s_drive = DefaultValue(P_LIM_DRIVE);
+  s->s_ceiling = DefaultValue(P_LIM_CEILING);
+  s->smooth_init = false;
+  s->beat = 0.0;
+  ++s->display_rev;
 }
 
 int FormatHz(char* buf, int len, float hz) {
@@ -296,6 +549,13 @@ int Display(const Instance* s, int p, char* buf, int len) {
       return snprintf(buf, len, "%.1f dB", v);
     case P_LIM_RELEASE:
       return snprintf(buf, len, "%.0f ms", v);
+    case P_PRESET_INFO: {
+      int slot = Option(s, P_PRESET_SLOT);
+      int st = s->status_slot == slot ? s->preset_status : 0;
+      static const char* const kStatus[6] = { NULL, "SAVED", "LOADED", "SAVE FAILED", "EMPTY", "LOAD FAILED" };
+      if (st > 0 && st < 6) return snprintf(buf, len, "PRESET %d: %s", slot + 1, kStatus[st]);
+      return snprintf(buf, len, "PRESET %d: %s", slot + 1, (s->slot_used >> slot) & 1u ? "STORED" : "EMPTY");
+    }
   }
   if (!strncmp(key, "lfo", 3)) {
     int first = P_LFO1_WAVE + (key[3] - '1') * (P_LFO2_WAVE - P_LFO1_WAVE);
@@ -320,6 +580,7 @@ int Display(const Instance* s, int p, char* buf, int len) {
 int GetParam(void* inst, const char* key, char* buf, int buf_len) {
   const Instance* s = static_cast<const Instance*>(inst);
   if (!strcmp(key, "state")) return SaveState(s, buf, buf_len);
+  if (!strcmp(key, "display_rev")) return snprintf(buf, buf_len, "%d", s->display_rev);
   size_t len = strlen(key);
   if (len > 8 && !strcmp(key + len - 8, "_display")) {
     int p = FindParam(key, len - 8);
@@ -327,6 +588,7 @@ int GetParam(void* inst, const char* key, char* buf, int buf_len) {
   }
   int p = FindParam(key, len);
   if (p < 0) return 0;
+  if (PARAMS[p].momentary) return snprintf(buf, buf_len, "0");   // triggers read back 0 (see SetParam)
   if (PARAMS[p].nopts > 0) return snprintf(buf, buf_len, "%d", Option(s, p));
   return snprintf(buf, buf_len, "%g", s->param[p]);
 }
@@ -339,6 +601,13 @@ inline int16_t ToShort(float x) {
 }
 
 void ProcessBlock(Instance* s, const int16_t* in_lr, int16_t* out_lr, int frames) {
+  if (s->panic_pending) { s->panic_pending = 0; Panic(s); }
+  char* preset = __atomic_exchange_n(&s->loaded_text, (char*)NULL, __ATOMIC_ACQ_REL);
+  if (preset) {
+    LoadState(s, preset, true);
+    SetPresetStatus(s, s->status_slot, 2);
+    free(__atomic_exchange_n(&s->retired_text, preset, __ATOMIC_ACQ_REL));   // the worker frees it (rarely us)
+  }
   // ---- tempo and sources
   plateau::Clock clock;
   clock.bpm = s->bpm;
@@ -424,6 +693,7 @@ void Process(void* inst, const int16_t* in_lr, int16_t* out_lr, int frames) {
     int n = frames - off < kMaxBlock ? frames - off : kMaxBlock;
     ProcessBlock(s, in_lr + 2 * off, out_lr + 2 * off, n);
   }
+  s->frames += frames;
 }
 
 const mpc_engine_t kEngine = { Create, Destroy, Midi, SetParam, GetParam, Render, Process };

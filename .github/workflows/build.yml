@@ -44,7 +44,7 @@ jobs:
             --entry build/pluginlist-entry.xml \
             --version "$VERSION" \
             --about "Plateau by ANDREALPHEUS: Valley Audio's Plateau reverb for MPC OS" \
-            --repo sunskiefer/Plateau-MPC --license GPL-3.0-or-later \
+            --repo sunskiefer/PlateauXXL --license GPL-3.0-or-later \
             -o dist
 
       - name: Catalog check

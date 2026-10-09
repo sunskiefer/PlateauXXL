@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <string>
 #include <vector>
@@ -35,12 +36,17 @@ void Check(bool ok, const char* what) {
 struct Plug {
   const mpc_engine_t* e;
   void* inst;
-  Plug() : e(mpc_engine()), inst(e->create(NULL)) {}
+  explicit Plug(const char* dir = "build/dsptest/presets") : e(mpc_engine()), inst(e->create(dir)) {}
   ~Plug() { e->destroy(inst); }
   void Set(const char* k, double v) {
     char b[32];
     snprintf(b, sizeof b, "%g", v);
     e->set_param(inst, k, b);
+  }
+  std::string Get(const char* k) {
+    char b[64] = {0};
+    e->get_param(inst, k, b, sizeof b);
+    return b;
   }
   std::string Text(const char* k) {
     char key[64], b[64] = {0};
@@ -364,6 +370,102 @@ int main(int argc, char** argv) {
     for (int i = 2 * 64; i < 2 * (n - 64); ++i) diff = abs(qo[i + 2 * 64] - quiet[i]) > diff ? abs(qo[i + 2 * 64] - quiet[i]) : diff;
     snprintf(msg, sizeof msg, "limiter: a quiet signal passes unchanged, 64 samples late (max difference %d LSB)", diff);
     Check(diff <= 2, msg);
+  }
+
+  // ---- Q-Links and taps (RMXXXL 1.2.1's rules)
+  {
+    Plug p;
+    Check(p.Get("clear") == "0" && p.Get("panic") == "0", "triggers read back 0, so every tap fires");
+    std::vector<int16_t> out;
+    p.Set("tuned", 1);
+    p.Set("tuned", 1);   // the rest of the same turn
+    p.Set("tuned", 0);
+    snprintf(msg, sizeof msg, "a switch flips once per Q-Link turn (Tuned %s after one turn)", p.Get("tuned").c_str());
+    Check(p.Get("tuned") == "1", msg);
+    p.Run(NULL, kRate / 2, &out);
+    p.Set("tuned", 1);   // a new turn towards the same value flips it back
+    snprintf(msg, sizeof msg, "the next turn flips it again, either way (Tuned %s)", p.Get("tuned").c_str());
+    Check(p.Get("tuned") == "0", msg);
+    p.Set("lfo1_wave", 1);
+    p.Set("lfo1_wave", 2);
+    snprintf(msg, sizeof msg, "an option list moves one step per 0.2 s however fast it turns (Wave %s)", p.Get("lfo1_wave").c_str());
+    Check(p.Get("lfo1_wave") == "1", msg);
+    p.Set("lfo1_wave", 5);
+    snprintf(msg, sizeof msg, "a tap on another option is never held back (Wave %s)", p.Get("lfo1_wave").c_str());
+    Check(p.Get("lfo1_wave") == "5", msg);
+    p.Run(NULL, kRate / 4, &out);
+    p.Set("lfo1_wave", 4);
+    Check(p.Get("lfo1_wave") == "4", "after 0.2 s the list steps again");
+  }
+  {   // a Q-Link turn to the right fires a trigger once per turn: Clear empties a held tank
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 1); p.Set("hold", 1);
+    std::vector<int16_t> in = Noise(kRate / 4, 0.3), out, held, after;
+    p.Run(&in, kRate / 4, &out);
+    p.Run(NULL, kRate / 4, &held);
+    p.Set("clear", 0.0078125);   // one Q-Link event: the read-back 0 plus 1/128
+    p.Run(NULL, kRate / 4, &after);
+    snprintf(msg, sizeof msg, "a Q-Link turn fires Clear (%.1f dB held, %.1f dB after)", Db(Rms(held, kRate / 8, kRate / 8)),
+             Db(Rms(after, kRate / 8, kRate / 8)));
+    Check(Rms(held, kRate / 8, kRate / 8) > 1e-3 && Rms(after, kRate / 8, kRate / 8) < 1e-4, msg);
+  }
+
+  // ---- Panic: every parameter back to its default, the tank empty, the sources restarted
+  {
+    Plug p;
+    p.Set("dry", 0); p.Set("wet", 1); p.Set("size", 0.9); p.Set("hold", 1); p.Set("lfo1_sync", 0);
+    p.Set("gt1_g3", 1); p.Set("size_src", 1); p.Set("lim_ceiling", -9); p.Set("preset_slot", 4);
+    std::vector<int16_t> in = Noise(kRate / 4, 0.3), out, after;
+    p.Run(&in, kRate / 4, &out);
+    std::string rev = p.Get("display_rev");
+    p.Set("panic", 1);
+    p.Run(NULL, kBlock, &after);
+    bool defaults = p.Get("size") == "0.5" && p.Get("hold") == "0" && p.Get("wet") == "0.5" && p.Get("dry") == "1" &&
+                    p.Get("lfo1_sync") == "4" && p.Get("gt1_g3") == "0" && p.Get("size_src") == "0" &&
+                    fabs(atof(p.Get("lim_ceiling").c_str()) + 0.3) < 1e-3;
+    snprintf(msg, sizeof msg, "Panic: every parameter back to its default (size %s, hold %s, wet %s, sync %s, ceiling %s)",
+             p.Get("size").c_str(), p.Get("hold").c_str(), p.Get("wet").c_str(), p.Get("lfo1_sync").c_str(),
+             p.Get("lim_ceiling").c_str());
+    Check(defaults, msg);
+    Check(p.Get("preset_slot") == "4", "Panic keeps the preset slot");
+    Check(p.Get("display_rev") != rev, "Panic tells MPC to redraw every knob (display_rev)");
+    std::vector<int16_t> silent;
+    p.Run(NULL, kRate / 4, &silent);
+    snprintf(msg, sizeof msg, "Panic empties the held tank (%.1f dBFS after)", Db(Rms(silent, 0, kRate / 4)));
+    Check(Rms(silent, 0, kRate / 4) < 1e-5, msg);
+  }
+
+  // ---- presets: 16 slots, files beside the plugin's data folder, written and read on a worker thread
+  {
+    system("rm -rf build/dsptest/presets");
+    Plug p;
+    std::vector<int16_t> out;
+    p.Set("preset_slot", 2);
+    snprintf(msg, sizeof msg, "an unused slot shows \"%s\"", p.Text("preset_info").c_str());
+    Check(p.Text("preset_info") == "PRESET 3: EMPTY", msg);
+    p.Set("size", 0.8); p.Set("decay", 0.9); p.Set("lfo2_wave", 4); p.Set("tuned", 1); p.Set("sq1_s5", -2.5);
+    p.Set("preset_save", 1);
+    for (int i = 0; i < 50 && p.Text("preset_info") != "PRESET 3: SAVED"; ++i) usleep(10000);
+    snprintf(msg, sizeof msg, "Save writes the slot (\"%s\")", p.Text("preset_info").c_str());
+    Check(p.Text("preset_info") == "PRESET 3: SAVED" && access("build/dsptest/presets/Preset 03.txt", R_OK) == 0, msg);
+    p.Run(NULL, kRate / 2, &out);
+    p.Set("size", 0.2); p.Set("decay", 0.3); p.Set("lfo2_wave", 0); p.Set("tuned", 0); p.Set("sq1_s5", 3);
+    p.Set("preset_load", 1);
+    for (int i = 0; i < 50 && p.Get("size") != "0.8"; ++i) { usleep(10000); p.Run(NULL, kBlock, &out); }
+    bool back = p.Get("size") == "0.8" && p.Get("decay") == "0.9" && p.Get("lfo2_wave") == "4" && p.Get("tuned") == "1" &&
+                p.Get("sq1_s5") == "-2.5";
+    snprintf(msg, sizeof msg, "Load brings every setting back (size %s, decay %s, wave %s, tuned %s, step %s; \"%s\")",
+             p.Get("size").c_str(), p.Get("decay").c_str(), p.Get("lfo2_wave").c_str(), p.Get("tuned").c_str(),
+             p.Get("sq1_s5").c_str(), p.Text("preset_info").c_str());
+    Check(back && p.Text("preset_info") == "PRESET 3: LOADED", msg);
+    Plug q;   // a new instance sees the stored slot
+    q.Set("preset_slot", 2);
+    snprintf(msg, sizeof msg, "a new instance sees the stored slot (\"%s\")", q.Text("preset_info").c_str());
+    Check(q.Text("preset_info") == "PRESET 3: STORED", msg);
+    q.Set("preset_slot", 9);
+    q.Set("preset_load", 1);
+    for (int i = 0; i < 50 && q.Text("preset_info") != "PRESET 10: EMPTY"; ++i) usleep(10000);
+    Check(q.Get("size") == "0.5", "loading an empty slot changes nothing");
   }
 
   // ---- display text
