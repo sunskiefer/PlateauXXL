@@ -1,4 +1,10 @@
-# Plateau for MPC OS
+# PlateauXXL
+
+Plateau brings Valley's plate reverb to MPC, tested on Akai Force with the latest OS and Mockba Mod. Features
+Bogaudio LFO, Mutable Tides and Marbles, an in-house step sequencer, interconnected modulation routing, filtering,
+saturation, RMXXXL-style limiting, presets, panic reset and full Q-Link control.
+
+## Plateau for MPC OS
 
 **Valley Audio's Plateau reverb, running natively inside MPC OS on the Akai Force.**
 
@@ -15,7 +21,7 @@ Marbles, as in VCV's Audible Instruments), plus two **step sequencers** and two 
 follow the MPC tempo.
 
 > [!NOTE]
-> **Status: 0.4.0.** 0.2.0 was tried on an Akai Force: the pages draw as designed. It passes its test suite on x86
+> **Status: 0.4.0.** 0.3.0 was tested on an Akai Force (latest MPC OS, MockbaMod). It passes its test suite on x86
 > (ASan + UBSan) and on the ARM build under QEMU. Report anything odd under [Issues](../../issues).
 
 ![The PLATEAU page](docs/img/plateau.png)
