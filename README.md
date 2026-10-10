@@ -12,7 +12,7 @@ sources are VCV favourites running inside the plugin, each on a page drawn like 
 track, a submix or the master; everything sits in one insert slot, follows the MPC tempo and saves with your project.
 
 > [!NOTE]
-> **Status: 0.4.1, tested on an Akai Force** (the latest MPC OS, with MockbaMod). It also passes the full test suite
+> **Status: 0.4.1, tested on an Akai Force** (MPC OS 3.9.1 with MockbaMod). It also passes the full test suite
 > on x86 (ASan + UBSan) and on the ARM build under QEMU. Report anything odd under [Issues](../../issues).
 
 ![The PLATEAU page](docs/img/plateau.png)
