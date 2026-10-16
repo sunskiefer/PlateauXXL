@@ -2,12 +2,12 @@
 # Build PlateauXXL for MPC OS Gen1 (armv7-a hard-float, glibc <= 2.31 so it also loads on MPC OS 2.x).
 #   ./build.sh                     (MPC_VST=../mpc-vst-plugins to use another framework checkout)
 # Needs: python3 + Pillow + cairosvg (+ the DejaVu fonts for the Mutable pages' italics), a host gcc (for shadow_art), and Zig (pip install ziglang). No Docker.
-# Output: build/package/ANDREALPHEUS - VST - PlateauXXL/  (skin + plateauxxl.so) and build/pluginlist-entry.xml
+# Output: build/package/L'Cronx - VST - PlateauXXL/  (skin + plateauxxl.so) and build/pluginlist-entry.xml
 set -euo pipefail
 cd "$(dirname "$0")"
 MPC_VST="${MPC_VST:-$PWD/third_party/mpc-vst-plugins}"
 ZIG="${ZIG:-python3 -m ziglang}"
-NAME="ANDREALPHEUS - VST - PlateauXXL"
+NAME="L'Cronx - VST - PlateauXXL"
 python3 tools/gen_params.py
 python3 tools/qlinks.py --check   # every control on a Q-Link, in reading order
 mkdir -p build/host build/arm

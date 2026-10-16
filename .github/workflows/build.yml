@@ -50,12 +50,13 @@ jobs:
       - name: Package
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
+          python3 tools/release_quotes.py third_party/mpc-vst-plugins
           python3 third_party/mpc-vst-plugins/tools/release.py \
             --so build/arm/plateauxxl.so \
-            --skin "build/skin/ANDREALPHEUS - VST - PlateauXXL" \
+            --skin "build/skin/L'Cronx - VST - PlateauXXL" \
             --entry build/pluginlist-entry.xml \
             --version "$VERSION" \
-            --about "PlateauXXL by ANDREALPHEUS: Valley Audio's Plateau reverb for MPC OS" \
+            --about "PlateauXXL by L'Cronx: Valley Audio's Plateau reverb for MPC OS" \
             --id plateauxxl --repo sunskiefer/PlateauXXL --license GPL-3.0-or-later \
             -o dist
 

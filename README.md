@@ -4,7 +4,7 @@
 MPC OS on the Akai Force.**
 
 PlateauXXL is a VST2 insert effect for MPC OS's built-in plugin host, made by L'Cronx (shown on the device as
-**PlateauXXL** by **ANDREALPHEUS**). It is a port of **Plateau**, Dale Johnson's plate reverb for VCV Rack: huge,
+**PlateauXXL** by **L'Cronx**). It is a port of **Plateau**, Dale Johnson's plate reverb for VCV Rack: huge,
 smooth tails from Jon Dattorro's 1997 algorithm, a modulated tank, Hold to freeze it, Clear to empty it, and a Tuned
 mode that turns tiny tank sizes into pitched, resonant tones. On VCV Rack, Plateau comes alive through what is patched
 into its fifteen CV jacks. A Force has no cables, so PlateauXXL builds the patch in: every jack picks a source, and the
@@ -95,8 +95,8 @@ ssh -t root@<device-ip> sh /tmp/PlateauXXL-<version>/install.sh
 ```
 
 The installer asks for confirmation (`-y` skips it), **stops MPC** (save your project first), copies the plugin
-to `/sdcard/Synths/ANDREALPHEUS - VST - PlateauXXL/`, backs up and edits `MPC.settings`, and starts MPC again.
-Running it again upgrades in place. Then insert **PlateauXXL** (manufacturer ANDREALPHEUS) on a track, submix or the
+to `/sdcard/Synths/L'Cronx - VST - PlateauXXL/`, backs up and edits `MPC.settings`, and starts MPC again.
+Running it again upgrades in place. Then insert **PlateauXXL** (manufacturer L'Cronx) on a track, submix or the
 master. `uninstall.sh` removes it the same way.
 
 Upgrading from 0.4.0 or earlier: those were installed as **Plateau**. Remove that first with the old zip's

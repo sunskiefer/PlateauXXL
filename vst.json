@@ -1,8 +1,8 @@
 {
   "name": "PlateauXXL",
-  "vendor": "ANDREALPHEUS",
+  "vendor": "L'Cronx",
   "uid": "AnPl",
-  "version": 4001,
+  "version": 4002,
   "so": "plateauxxl.so",
   "params": "params.json",
   "effect": true,

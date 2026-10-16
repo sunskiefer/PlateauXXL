@@ -3,7 +3,7 @@
 PlateauXXL is Valley Audio's **Plateau** reverb from VCV Rack as an insert effect for MPC OS on the Akai Force, with
 the patch cables replaced by modulation sources that run inside the plugin: four **Bogaudio LFOs**, **Tidal
 Modulator 2** (Mutable Instruments Tides 2), **Random Sampler** (Mutable Instruments Marbles), and two step and two
-gate sequencers. On the device it is listed as **PlateauXXL**, manufacturer **ANDREALPHEUS**.
+gate sequencers. On the device it is listed as **PlateauXXL**, manufacturer **L'Cronx**.
 
 - [Install](#install)
 - [The signal path](#the-signal-path)
@@ -33,7 +33,7 @@ You need a first-generation Akai Force on MPC OS 3.x with root SSH access (for e
    ssh -t root@<device-ip> sh /tmp/PlateauXXL-<version>/install.sh
    ```
 
-3. MPC starts again. Insert **PlateauXXL** (ANDREALPHEUS) on a track, a submix or the master.
+3. MPC starts again. Insert **PlateauXXL** (L'Cronx) on a track, a submix or the master.
 
 Running the installer again upgrades in place; `uninstall.sh` in the same folder removes it. Your presets live in
 `/sdcard/PlateauXXL Presets` and are not touched by either.

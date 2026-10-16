@@ -1,3 +1,5 @@
+> **0.4.2** is 0.4.1 packed under L'Cronx (plugin folder `L'Cronx - VST - PlateauXXL`); nothing else changed. Uninstall 0.4.1 first.
+
 **PlateauXXL — Valley Audio's Plateau reverb, patched with its own LFOs, random sources and sequencers, running natively inside MPC OS on the Akai Force.**
 
 Put it on a track, a submix or the master: huge Dattorro plate tails, Hold to freeze the tank, Clear to empty it, Tuned mode for pitched resonances, and every one of the module's 15 CV jacks patched to a modulation source running inside the plugin. Everything sits in one insert slot, with its own touchscreen pages and Q-Links, follows the MPC tempo and saves with your project.
@@ -26,7 +28,7 @@ Download **PlateauXXL-0.4.1-mpc-armv7.zip** below, unzip it, then:
     scp -r PlateauXXL-0.4.1 root@<device-ip>:/tmp/
     ssh -t root@<device-ip> sh /tmp/PlateauXXL-0.4.1/install.sh
 
-The installer stops MPC (save first), installs the plugin, and starts MPC again. Then insert **PlateauXXL** (manufacturer ANDREALPHEUS) as an insert effect. Presets go in `/sdcard/PlateauXXL Presets`.
+The installer stops MPC (save first), installs the plugin, and starts MPC again. Then insert **PlateauXXL** (manufacturer L'Cronx) as an insert effect. Presets go in `/sdcard/PlateauXXL Presets`.
 
 Upgrading from 0.4.0 or earlier: those were installed as **Plateau**. Remove that first with the old zip's uninstaller (`ssh -t root@<device-ip> sh /tmp/Plateau-0.4.0/uninstall.sh`), then install this one.
 
