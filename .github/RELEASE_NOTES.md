@@ -1,4 +1,4 @@
-> **0.4.2** is 0.4.1 packed under L'Cronx (plugin folder `L'Cronx - VST - PlateauXXL`); nothing else changed. Uninstall 0.4.1 first.
+> **0.4.3** is 0.4.2 built on the latest wrapper and includes the Q-Link and automation fix (#486–#489): Q-Links now move parameters on the track's automation screen. Nothing else changed. Installs over 0.4.2 in place.
 
 **PlateauXXL — Valley Audio's Plateau reverb, patched with its own LFOs, random sources and sequencers, running natively inside MPC OS on the Akai Force.**
 
