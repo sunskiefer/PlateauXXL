@@ -1,4 +1,4 @@
-# PlateauXXL v0.4.1
+# PlateauXXL v0.5.0
 
 **Valley Audio's Plateau reverb, patched with its own LFOs, random sources and sequencers, running natively inside
 MPC OS on the Akai Force.**
@@ -12,8 +12,9 @@ sources are VCV favourites running inside the plugin, each on a page drawn like 
 track, a submix or the master; everything sits in one insert slot, follows the MPC tempo and saves with your project.
 
 > [!NOTE]
-> **Status: 0.4.1, tested on an Akai Force** (MPC OS 3.9.1 with MockbaMod). It also passes the full test suite
-> on x86 (ASan + UBSan) and on the ARM build under QEMU. Report anything odd under [Issues](../../issues).
+> **Status: 0.5.0 is checked offline only** (2026-11-22): it adds the 64-bit (Gen2) build and Akai's plugin folder
+> format for MPC OS 3.10.1, with the same code, pages and presets as 0.4.3. The last release **tried on a device is 0.4.1**
+> (Akai Force, MPC OS 3.9.1 with MockbaMod). Report anything odd under [Issues](../../issues).
 
 ![The PLATEAU page](docs/img/plateau.png)
 
@@ -78,16 +79,20 @@ Clear empties the tank on each rising edge).
 
 ## Requirements
 
-- An **Akai Force** (first generation). Other first-generation MPC OS units (MPC Live / Live II, One, X,
-  Key 61) should work but are untested.
-- **Root SSH access** to the device, for example through MockbaMod. Stock MPC OS can't install third-party
-  plugins.
-- **MPC OS 3.x.** The skin uses the 3.x format.
+- An **Akai Force** or another first-generation MPC (32-bit, `armv7`: MPC Live / Live II, One, X, Key 61 / 37), or, from
+  0.5.0, a **Gen2 MPC** (64-bit, `aarch64`: MPC Live III, XL, One G2, Key G2 and later). Only the Force has been tried.
+- **MPC OS 3.x.** The skin uses the 3.x format. On **MPC OS 3.10.1 or later** no root access is needed: copy the
+  `-mpc-sdk.zip` folder into `VST2 Plugins`.
+- On older MPC OS, **root SSH access** to the device, for example through MockbaMod.
 
 ## Installation
 
-Download `PlateauXXL-<version>-mpc-armv7.zip` from [Releases](../../releases), or build it (below). Unzip it and
-follow the `INSTALL.md` inside. In short:
+**MPC OS 3.10.1 or later (any MPC):** download `PlateauXXL-<version>-mpc-sdk.zip` from [Releases](../../releases), unzip
+it and copy the `L'Cronx - VST - PlateauXXL` folder into the `VST2 Plugins` folder of your drive.
+
+**Force and older MPC OS:** download `PlateauXXL-<version>-mpc-armv7.zip` (Force and the 32-bit MPCs) or
+`PlateauXXL-<version>-mpc-aarch64.zip` (the 64-bit MPCs), or build it (below). Unzip it and follow the `INSTALL.md`
+inside. In short:
 
 ```
 scp -r PlateauXXL-<version> root@<device-ip>:/tmp/

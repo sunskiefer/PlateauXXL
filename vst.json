@@ -2,7 +2,7 @@
   "name": "PlateauXXL",
   "vendor": "L'Cronx",
   "uid": "AnPl",
-  "version": 4002,
+  "version": 5000,
   "so": "plateauxxl.so",
   "params": "params.json",
   "effect": true,

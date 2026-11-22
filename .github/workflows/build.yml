@@ -25,7 +25,7 @@ jobs:
       - name: Tests (x86, ASan + UBSan)
         run: test/run_tests.sh
 
-      - name: Build (armv7, glibc 2.31)
+      - name: Build (armv7 and aarch64, glibc 2.31)
         run: |
           if ! ./build.sh > build.log 2>&1; then
             grep -v -E "warning|note:|In file included|^ +[0-9]* [|]|^ +[|]|\^|~~" build.log | tail -25 \
@@ -47,26 +47,42 @@ jobs:
           esac
           echo "version=$V" >> "$GITHUB_OUTPUT"; echo "release=$REL" >> "$GITHUB_OUTPUT"; echo "version $V, release $REL"
 
+      # The zips as the Open MPC catalog reads them, made with the open-mpc release tools (third_party/open-mpc-release, from
+      # open-mpc main, with the L'Cronx apostrophe shell-escaped): -mpc-armv7.zip (Gen1 and the Force), -mpc-aarch64.zip (Gen2)
+      # and -mpc-sdk.zip (Akai's one-folder format, MPC OS 3.10.1).
       - name: Package
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
-          python3 tools/release_quotes.py third_party/mpc-vst-plugins
-          python3 third_party/mpc-vst-plugins/tools/release.py \
-            --so build/arm/plateauxxl.so \
-            --skin "build/skin/L'Cronx - VST - PlateauXXL" \
-            --entry build/pluginlist-entry.xml \
-            --version "$VERSION" \
-            --about "PlateauXXL by L'Cronx: Valley Audio's Plateau reverb for MPC OS" \
-            --id plateauxxl --repo sunskiefer/PlateauXXL --license GPL-3.0-or-later \
-            -o dist
+          for A in arm arm64; do
+            python3 third_party/open-mpc-release/release.py \
+              --so build/$A/plateauxxl.so \
+              --skin "build/skin/L'Cronx - VST - PlateauXXL" \
+              --entry build/pluginlist-entry.xml \
+              --version "$VERSION" \
+              --about "PlateauXXL by L'Cronx: Valley Audio's Plateau reverb for MPC OS" \
+              --id plateauxxl --repo sunskiefer/PlateauXXL --license GPL-3.0-or-later --asset-name PlateauXXL \
+              -o dist
+          done
+          python3 third_party/open-mpc-release/sdk_zip.py "dist/PlateauXXL-$VERSION-mpc-sdk.zip" \
+            "dist/PlateauXXL-$VERSION-mpc-armv7.zip" "dist/PlateauXXL-$VERSION-mpc-aarch64.zip"
+          ls -la dist
+
+      # the apostrophe in L'Cronx must never break the installer
+      - name: Installer scripts parse (sh -n)
+        run: |
+          for a in armv7 aarch64; do
+            rm -rf chk && mkdir chk && (cd chk && unzip -q ../dist/*-mpc-$a.zip && sh -n */install.sh && sh -n */uninstall.sh && echo "$a: ok")
+          done
 
       - name: Catalog check
         if: steps.ver.outputs.release == '1'
-        run: python3 third_party/mpc-vst-plugins/tools/catalog_check.py dist/*.zip --catalog
+        run: |
+          python3 third_party/open-mpc-release/catalog_check.py dist/*-mpc-armv7.zip --catalog
+          python3 third_party/open-mpc-release/catalog_check.py dist/*-mpc-aarch64.zip --catalog
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PlateauXXL-mpc-armv7
+          name: PlateauXXL-mpc
           path: dist/*.zip
 
       - name: Release
@@ -79,4 +95,4 @@ jobs:
           make_latest: true
           files: dist/*.zip
           body_path: .github/RELEASE_NOTES.md
-          prerelease: false
+          prerelease: true   # a version listed in tested.json (tried on a device) is promoted to a full release

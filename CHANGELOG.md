@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.0
+
+PlateauXXL for the 64-bit MPCs and for Akai's plugin folder format (MPC OS 3.10.1). Same sound, pages and presets as
+0.4.3. **Not tried on a device yet**: checked offline only (2026-11-22), see the README's Status.
+
+- **A 64-bit build** for the 64-bit MPCs (MPC Live III, XL, One G2, Key G2 and later). The 32-bit build (MPC X, Live,
+  Live II, One, Key 61 / 37, Force) is the same code.
+- **Three zips per release**, made with the current Open MPC catalog release tools (`third_party/open-mpc-release`, from
+  open-mpc `main`): `PlateauXXL-0.5.0-mpc-armv7.zip` (Force and the 32-bit MPCs, with `install.sh`, as before),
+  `PlateauXXL-0.5.0-mpc-aarch64.zip` (the 64-bit MPCs, with `install.sh`) and `PlateauXXL-0.5.0-mpc-sdk.zip` (one folder
+  with `plugin.json` and both binaries for every MPC on MPC OS 3.10.1 or later: copy it into `VST2 Plugins`, no mod needed).
+- The installers are the current ones: on MPC OS 3.10.1+ `install.sh` and `uninstall.sh` find the `VST2 Plugins` drive
+  themselves when `-t` is left out, and they handle case-insensitive volumes. The catalog check reports 0 warnings (the `'` of
+  L'Cronx is shell-escaped in both scripts, checked with `sh -n`).
+- The 0.4.3 release stays available as it is. Installs over 0.4.x in place.
+- Nothing else changed: pages, Q-Links, presets and the Q-Link / automation fix (#486-#489) are as in 0.4.3.
+
 ## 0.4.3
 - Built on the latest wrapper and includes the Q-Link and automation fix (mpc-vst-plugins #486-#489): Q-Links now
   move this plugin's parameters on the track's automation screen (MPC no longer rebuilds its parameter screen on every

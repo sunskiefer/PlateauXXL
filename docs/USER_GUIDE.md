@@ -23,9 +23,9 @@ gate sequencers. On the device it is listed as **PlateauXXL**, manufacturer **L'
 
 ## Install
 
-You need a first-generation Akai Force on MPC OS 3.x with root SSH access (for example through MockbaMod).
+You need an Akai Force or another MPC on MPC OS 3.x. From 0.5.0 the 64-bit MPCs (Gen2) are supported too, and on MPC OS 3.10.1 or later you can copy the `-mpc-sdk.zip` folder into `VST2 Plugins` (no root access needed). On older MPC OS you need root SSH access (for example through MockbaMod).
 
-1. Download `PlateauXXL-<version>-mpc-armv7.zip` from [Releases](../../../releases) and unzip it on your computer.
+1. Download `PlateauXXL-<version>-mpc-armv7.zip` (Force, 32-bit MPCs) or `-mpc-aarch64.zip` (64-bit MPCs) from [Releases](../../../releases) and unzip it on your computer.
 2. Copy the folder to the Force and run the installer (save your project first: it stops MPC):
 
    ```
